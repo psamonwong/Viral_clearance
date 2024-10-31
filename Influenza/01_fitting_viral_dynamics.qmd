@@ -1,0 +1,286 @@
+---
+title: "Fitting viral dynamics"
+format: html
+editor: visual
+---
+
+```{r}
+#library(conflicted)
+library(rstan)
+library(tidyverse)
+library(kableExtra)
+library(finalfit)
+library(RColorBrewer)
+library(lubridate)
+library(brms)
+library(ggplot2)
+library(ggpubr)
+library(scales)
+library(cowplot)
+library(grid)
+
+#conflicts_prefer(dplyr::filter)
+
+## information on software/hardware used
+version
+sessionInfo()
+
+rstan_options(auto_write = TRUE)
+## parameters for the analysis
+Dmax = 5.5
+RUN_MODELS = F
+
+my_probs = c(0.025, 0.1, .5, .9, .975)
+source('functions.R')
+```
+
+## *Load data*
+
+*Set up analysis*
+
+```{r load_data}
+mITT_threshold <- 250
+use_threshold = F
+```
+
+```{r define_population}
+#| echo: false
+# set as file with relevant dataset
+f_name = 'Analysis_Data/no_study_drug_analysis.csv'
+adastra_dat = read.csv(f_name)
+adastra_dat$Rand_date = as.POSIXct(adastra_dat$Rand_date)
+```
+
+## *Make modified intention to treat population*
+
+```{r make_analysis_data}
+#| echo: false
+adastra_dat = adastra_dat %>% group_by(ID) %>%
+  mutate(
+    baseline_vl = mean(log10_viral_load[which(Timepoint_ID==0)]),
+    mITT = ifelse(use_threshold, baseline_vl > log10(mITT_threshold), T)) 
+
+
+pop_table = adastra_dat %>% distinct(ID, .keep_all = T) %>% arrange(baseline_vl)
+print(table(Intervention=pop_table$Trt, `mITT population` = pop_table$mITT))
+```
+
+## Plot recruitment
+
+```{r timeline}
+timeline <- plot_randomisation(adastra_dat %>% distinct(ID, Rand_date, Trt, fluType))
+timeline
+```
+
+## *Baseline characteristics*
+
+In all patients
+
+```{r}
+adastra_dat = adastra_dat %>% group_by(ID, Timepoint_ID) %>%
+  mutate(daily_VL = mean(log10_viral_load),
+         daily_CT = mean(CT)) %>% 
+  ungroup() %>%
+  mutate(Site = as.factor(Site),
+         Study_time = as.numeric(difftime(Rand_date,min(Rand_date),units = 'weeks')),
+         Study_time = scale(Study_time) #normalise
+  )
+```
+
+```{r base_vl_plot}
+base_vl_plot <-  plot_vl_base(adastra_dat, fluType = T) 
+base_vl_plot
+```
+
+```{r}
+plot_name <- 'Plots/viral_dynamics.png'
+
+png(plot_name, width = 8, height = 4, units = 'in', res = 350)
+base_vl_plot
+dev.off()
+```
+
+### For all analyses
+
+```{r analysis_data}
+#| echo: false
+adastra_dat_analysis =
+  adastra_dat %>% ungroup() %>%
+  filter(Time <= Dmax, mITT) %>%
+  arrange(log10_viral_load==log10_cens_vl) %>%
+  mutate(RnaseP_scaled = scale(40 - CT_RNaseP,scale = F),
+         Mean_age = mean(Age[!duplicated(ID)]),
+         SD_age = sd(Age[!duplicated(ID)]),
+         Age_scaled = (Age-Mean_age)/SD_age)
+
+Baseline_data = adastra_dat_analysis %>% ungroup() %>% 
+  filter(Timepoint_ID==0) %>% 
+  distinct(ID, .keep_all = T) %>%
+  mutate(Baseline.viral.load = daily_VL,
+         Baseline.CT = daily_CT)
+
+tab.ff <- Baseline_data %>% 
+  summary_factorlist(
+    dependent = "Trt", # name of grouping / treatment variable
+    explanatory = c("Site", "Age", 'BMI', 
+                    #'vaccine',
+                    "Baseline.viral.load",'Sex', 'fluType' ,
+                    'symptomDay'
+    ),
+    total_col = TRUE, # add column with statistics for the whole sample
+    add_row_total = TRUE, # add column with number of valid cases
+    include_row_missing_col = FALSE,
+    add_dependent_label = T,
+    na_include = TRUE # make variables' missing data explicit
+  ) %>%
+  kbl(
+    caption = "Baseline characteristics",
+    booktabs = TRUE,
+    align = "lrlrrr",
+  ) %>%
+  kable_classic(full_width = FALSE)
+tab.ff
+# save_kable(tab.ff,file = 'Baseline_characteristics.png')
+```
+
+## *Fit models*
+
+```{r}
+#| echo: false
+source('priors.R')
+
+# Analysis data
+writeLines(sprintf('Analysis dataset contains %s patients and %s datapoints (%s above LLOD, %s%%)',
+                   length(unique(adastra_dat_analysis$ID)),
+                   nrow(adastra_dat_analysis),
+                   sum(adastra_dat_analysis$CT<40),
+                   round(100*mean(adastra_dat_analysis$CT<40))))
+
+covs_base = c('symptomDay','fluType', 'Study_time', 'Age_scaled')
+covs_full=c(covs_base)
+
+stan_inputs <- list()
+trt_formulas <- c("~ Trt")
+for(i in 1:length(trt_formulas)){
+  stan_inputs[[i]] = 
+    make_stan_inputs(input_data_fit = adastra_dat_analysis,
+                     int_covs_base = covs_base,
+                     int_covs_full = covs_full,
+                     slope_covs_base = c('fluType','Study_time'),
+                     slope_covs_full = covs_full,
+                  #   trt_frmla = formula(trt_formulas[i]),
+                     Dmax = Dmax)
+}
+```
+
+```{r setup_models}
+all_mods = "Stan_models/Linear_model_basic_new.stan" 
+#list.files('Stan_models',full.names = TRUE,pattern = '*stan')
+
+model_settings = expand.grid(mod = all_mods,
+                             prior = 1,
+                             cov_matrices = 1)#,
+                             #trt_formulas = 1) #c(1,2))
+
+model_settings$Niter = 2000
+model_settings$Nwarmup = 1000
+model_settings$Nthin = 4
+model_settings$Nchain = 4
+
+writeLines(sprintf('We are running all models with %s chains and %s samples for each chain, discarding %s for burn-in and thining every %s, thus giving a total of %s posterior samples per model.',
+                   unique(model_settings$Nchain),
+                   unique(model_settings$Niter),
+                   unique(model_settings$Nwarmup),
+                   unique(model_settings$Nthin), 
+                   unique(model_settings$Nchain*(model_settings$Niter-model_settings$Nwarmup)/model_settings$Nthin)))
+
+model_setup_f_name = paste0('Rout/model_settings.RData')
+save(model_settings, 
+     adastra_dat_analysis,
+     stan_inputs, 
+     all_priors,
+     file = model_setup_f_name)
+```
+```{r}
+i <- 1
+stan_input_job = stan_inputs[[i]]
+
+ analysis_data_stan = stan_input_job$analysis_data_stan
+  #analysis_data_stan$trt_mat = stan_input_job$Treatment_matrix
+  #analysis_data_stan$K_trt = ncol(analysis_data_stan$trt_mat)
+  
+  x_intercept = stan_input_job$cov_matrices$X_int[[model_settings$cov_matrices[i]]]
+  if(ncol(x_intercept)==0) x_intercept = array(0, dim=c(nrow(x_intercept),1))
+  analysis_data_stan$x_intercept = x_intercept
+  analysis_data_stan$K_cov_intercept= ncol(x_intercept)
+  
+  x_slope = stan_input_job$cov_matrices$X_slope[[model_settings$cov_matrices[i]]]
+  if(ncol(x_slope)==0) x_slope = array(0, dim=c(nrow(x_slope),1))
+  analysis_data_stan$x_slope = x_slope
+  analysis_data_stan$K_cov_slope=ncol(x_slope)
+  
+  
+```
+
+
+
+```{r}
+mod = stan_model(file = "Stan_models/Linear_model_basic_new.stan") # compile 
+```
+
+```{r}
+out = sampling(mod, 
+               data=c(analysis_data_stan,
+                      all_priors[[model_settings$prior[i]]]),
+               iter=model_settings$Niter[i],
+               chain=model_settings$Nchain[i],
+               thin=model_settings$Nthin[i],
+               warmup=model_settings$Nwarmup[i],
+               save_warmup = FALSE,
+               seed=i,
+               cores = 4,
+               # pars=c('alpha_0', 'beta_0', 't_dof',
+               #        'sigma_logvl', 'sigmasq_u', 'L_Omega'), # only save trt effect parameter 
+               include=T)
+```
+
+```{r}
+file_name = 'Rout/model_fits.RData'
+```
+
+```{r}
+save(out,
+     file = file_name)
+```
+
+```{r}
+load('Rout/model_fits.RData')
+```
+
+```{r}
+trace <- traceplot(out, pars = c("sigma_logvl", "alpha_0", "beta_0"))
+
+trace
+```
+
+
+
+```{r}
+model_selects <- 1
+ff = 'Rout/model_fits.RData'
+
+ind_plot_list <- plot_inds(model_selects, Baseline_data)
+ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4, common.legend = T, legend = "right")
+ind_plot_all
+```
+
+```{r}
+for(i in 1:length(ind_plot_all)){
+  fname <- paste0("Plots/Ind_plots/Plots_individual_", i, ".png")
+  png(fname, width = 10, height = 8, units = 'in', res = 350)
+  print(annotate_figure( ind_plot_all[[i]], bottom = textGrob("Time since randomisation (days)", vjust = 0.5, gp = gpar(cex = 1.2, fontface="bold")),
+                         left = textGrob("Viral densities (genomes/mL)", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))))
+  dev.off()
+  
+}
+```
