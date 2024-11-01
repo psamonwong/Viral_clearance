@@ -201,6 +201,7 @@ save(model_settings,
      all_priors,
      file = model_setup_f_name)
 ```
+
 ```{r}
 i <- 1
 stan_input_job = stan_inputs[[i]]
@@ -221,8 +222,6 @@ stan_input_job = stan_inputs[[i]]
   
   
 ```
-
-
 
 ```{r}
 mod = stan_model(file = "Stan_models/Linear_model_basic_new.stan") # compile 
@@ -262,8 +261,6 @@ trace <- traceplot(out, pars = c("sigma_logvl", "alpha_0", "beta_0"))
 
 trace
 ```
-
-
 
 ```{r}
 model_selects <- 1
