@@ -41,6 +41,9 @@ source('functions.R')
 ```{r load_data}
 mITT_threshold <- 250
 use_threshold = T
+
+Type <- "A" # "A" or "B" or c("A", "B")
+Lab <- ifelse(length(Type)>1, "A_and_B", Type)
 ```
 
 ```{r define_population}
@@ -67,8 +70,6 @@ adastra_dat <- merge(adastra_dat, check_PCR_missing[,c("ID", "all_pcr_early")], 
 
 ```
 
-
-
 ```{r make_analysis_data}
 #| echo: false
 adastra_dat = adastra_dat %>% group_by(ID) %>%
@@ -93,7 +94,7 @@ timeline
 ## *Baseline characteristics*
 
 ```{r}
-adastra_dat = adastra_dat %>% filter(mITT) %>% group_by(ID, Timepoint_ID) %>%
+adastra_dat = adastra_dat %>% filter(mITT, fluType %in% Type) %>% group_by(ID, Timepoint_ID) %>%
   mutate(daily_VL = mean(log10_viral_load),
          daily_CT = mean(CT)) %>% 
   ungroup() %>%
@@ -109,9 +110,10 @@ base_vl_plot
 ```
 
 ```{r}
-plot_name <- 'Plots/viral_dynamics.png'
+plot_name <- paste0('Plots/viral_dynamics_type_', Type,'.png')
 
-png(plot_name, width = 8, height = 4, units = 'in', res = 350)
+
+png(plot_name, width = ifelse(length(Type) > 1, 8, 4), height = 4, units = 'in', res = 350)
 base_vl_plot
 dev.off()
 ```
@@ -190,13 +192,13 @@ for(i in 1:length(trt_formulas)){
 ```
 
 ```{r setup_models}
-all_mods = "Stan_models/Linear_model_basic_new.stan" 
+all_mods = c("Stan_models/Exponential_decay_model_basic.stan",
+             "Stan_models/Bi_exponential_decay_model_basic.stan")
 #list.files('Stan_models',full.names = TRUE,pattern = '*stan')
 
 model_settings = expand.grid(mod = all_mods,
                              prior = 1,
-                             cov_matrices = 1)#,
-                             #trt_formulas = 1) #c(1,2))
+                             cov_matrices = 1)
 
 model_settings$Niter = 2000
 model_settings$Nwarmup = 1000
@@ -210,7 +212,7 @@ writeLines(sprintf('We are running all models with %s chains and %s samples for 
                    unique(model_settings$Nthin), 
                    unique(model_settings$Nchain*(model_settings$Niter-model_settings$Nwarmup)/model_settings$Nthin)))
 
-model_setup_f_name = paste0('Rout/model_settings.RData')
+model_setup_f_name = paste0('Rout/model_settings_type_', Lab, '.RData')
 save(model_settings, 
      adastra_dat_analysis,
      stan_inputs, 
@@ -226,21 +228,23 @@ stan_input_job = stan_inputs[[i]]
   #analysis_data_stan$trt_mat = stan_input_job$Treatment_matrix
   #analysis_data_stan$K_trt = ncol(analysis_data_stan$trt_mat)
   
-  x_intercept = stan_input_job$cov_matrices$X_int[[model_settings$cov_matrices[i]]]
-  if(ncol(x_intercept)==0) x_intercept = array(0, dim=c(nrow(x_intercept),1))
-  analysis_data_stan$x_intercept = x_intercept
-  analysis_data_stan$K_cov_intercept= ncol(x_intercept)
+  # x_intercept = stan_input_job$cov_matrices$X_int[[model_settings$cov_matrices[i]]]
+  # if(ncol(x_intercept)==0) x_intercept = array(0, dim=c(nrow(x_intercept),1))
+  # analysis_data_stan$x_intercept = x_intercept
+  # analysis_data_stan$K_cov_intercept= ncol(x_intercept)
   
-  x_slope = stan_input_job$cov_matrices$X_slope[[model_settings$cov_matrices[i]]]
-  if(ncol(x_slope)==0) x_slope = array(0, dim=c(nrow(x_slope),1))
-  analysis_data_stan$x_slope = x_slope
-  analysis_data_stan$K_cov_slope=ncol(x_slope)
+  # x_slope = stan_input_job$cov_matrices$X_slope[[model_settings$cov_matrices[i]]]
+  # if(ncol(x_slope)==0) x_slope = array(0, dim=c(nrow(x_slope),1))
+  # analysis_data_stan$x_slope = x_slope
+  # analysis_data_stan$K_cov_slope=ncol(x_slope)
   
   
 ```
 
 ```{r}
-mod = stan_model(file = "Stan_models/Linear_model_basic_new.stan") # compile 
+i <- 2
+
+mod = stan_model(file = as.character(model_settings$mod[i])) # compile 
 ```
 
 ```{r}
@@ -260,7 +264,7 @@ out = sampling(mod,
 ```
 
 ```{r}
-file_name = 'Rout/model_fits.RData'
+file_name = paste0('Rout/model_fits_type_', Lab, '_',i,'.RData') 
 ```
 
 ```{r}
@@ -269,7 +273,7 @@ save(out,
 ```
 
 ```{r}
-load('Rout/model_fits.RData')
+load('Rout/model_fits_type_A_1.RData')
 ```
 
 ```{r}
@@ -305,10 +309,9 @@ post_summary <- post_summary %>%
 post_summary    
 ```
 
-
 ```{r}
 model_selects <- 1
-ff = 'Rout/model_fits.RData'
+ff = 'Rout/model_fits_type_A_1.RData'
 
 ind_plot_list <- plot_inds(model_selects, Baseline_data)
 ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4)#, common.legend = T, legend = "right")
@@ -325,7 +328,6 @@ for(i in 1:length(ind_plot_all)){
   
 }
 ```
-
 
 ```{r}
 ind_res <- 1
@@ -409,8 +411,6 @@ ggarrange(G_cov2, G_cov1)
 dev.off()
 ```
 
-
-
 ```{r}
 # Half-life flu A
 slope_to_hl(post_summary[3,2:4]) %>% round(1)
@@ -421,5 +421,3 @@ slope_to_hl(post_summary[3,2:4]) %>% round(1)
 quantile(post$beta_0 * exp(slope_coefs$slope_coefs[,1]), c(0.025, 0.5, 0.975)) %>%
   slope_to_hl() %>% round(1)
 ```
-
-

@@ -726,7 +726,7 @@ plot_vl_box <- function(dataplot, trt_colors, fluType = F){
     theme_bw() +
     scale_y_continuous(labels=label_math(), breaks = seq(0,10,2), limits = c(0,9)) +
     xlab("Time since randomisation (days)") +
-    ylab("Viral densitites (log10 genomes/mL)") + 
+    ylab("Viral densities (log10 genomes/mL)") + 
     theme(axis.title  = element_text(face = "bold"),
           plot.title = element_text(face = "bold"),
           legend.position = "none",
@@ -984,7 +984,7 @@ plot_vl_base <- function(dataplot, fluType = F){
     theme_bw() +
     scale_y_continuous(labels=label_math(), breaks = seq(0,10,2), limits = c(0,9)) +
     xlab("Time since randomisation (days)") +
-    ylab("Viral densitites (log10 genomes/mL)") + 
+    ylab("Viral densities (log10 genomes/mL)") + 
     theme(axis.title  = element_text(face = "bold"),
           plot.title = element_text(face = "bold"),
           legend.position = "none",

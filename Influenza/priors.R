@@ -10,7 +10,13 @@ get_priors = function(){
                       slope_coefs_sd = .5,
                       intercept_coefs_sd = .5,
                       t_max_pop_mean = -3,
-                      t_max_pop_sd = 3)
+                      t_max_pop_sd = 3,
+                      A0_prior = 5,
+                      B0_prior = 5,
+                      coef_1_prior = -0.5,
+                      coef_2_prior = -0.5,
+                      prior_intercept_sd = 1,
+                      prior_coef_sd = 1)
   
   prior_params_sensitive = prior_params
   for(i in grep('sd',x = names(prior_params))){
