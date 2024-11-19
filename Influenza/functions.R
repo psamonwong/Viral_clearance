@@ -871,7 +871,7 @@ plot_randomisation <- function(Baseline_data){
 plot_inds <- function(model_selects, Baseline_data){
   model_list = list()
   
-  stan_inputs_i <- stan_inputs[[model_selects]]
+  stan_inputs_i <- stan_inputs#[[model_selects]]
   adastra_dat_analysis <- data.frame("ID" = stan_inputs_i$analysis_data_stan$id,
                                      "log10_viral_load" = stan_inputs_i$analysis_data_stan$log_10_vl,
                                      "Time" = stan_inputs_i$analysis_data_stan$obs_day)
@@ -919,7 +919,7 @@ plot_inds <- function(model_selects, Baseline_data){
       geom_line(data = plot_data, aes(x = Time, y = med, col = fluType), linewidth = 1, alpha = 0.8) +
       theme_bw() +
       scale_y_continuous(labels=label_math(), breaks = seq(0,10,2)) +
-      coord_cartesian(ylim = c(0,9), xlim = c(0,6))+
+      coord_cartesian(ylim = c(0,9), xlim = c(0,max(plot_data$Timepoint_ID)))+
       scale_x_continuous(breaks = 0:14) +
       ylab("") +
       xlab("") +
@@ -999,6 +999,30 @@ plot_vl_base <- function(dataplot, fluType = F){
   G
   
 }
+
+make_mITT <- function(adastra_dat, use_threshold, mITT_threshold, Type){
+  # Checking if the patient has PCR data in early follow-up days (D0, D1, D2, D3)
+  check_PCR_missing <- adastra_dat %>%
+    mutate(count = 1,
+           Timepoint_ID = paste0("D", Timepoint_ID)) %>%
+    group_by(ID, Timepoint_ID) %>%
+    summarise(n = n()) %>%
+    pivot_wider(names_from = Timepoint_ID, values_from = n) %>%
+    mutate(all_pcr_early = !is.na(sum(D0, D1, D2, D3)))
+  
+  adastra_dat <- merge(adastra_dat, check_PCR_missing[,c("ID", "all_pcr_early")], all.x = T)
+  
+  # Marked patients with some missing PCR data AND baseline viral density less than threshold 
+  adastra_dat = adastra_dat %>% group_by(ID) %>%
+    mutate(
+      baseline_vl = mean(log10_viral_load[which(Timepoint_ID==0)]),
+      mITT = ifelse(use_threshold, baseline_vl > log10(mITT_threshold), T) & all_pcr_early) %>%
+    filter(fluType %in% Type)
+  
+  return(adastra_dat)
+}
+
+
 
 checkStrict(make_stan_inputs)
 checkStrict(plot_serial_data)

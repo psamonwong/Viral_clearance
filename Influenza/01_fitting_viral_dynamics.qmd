@@ -27,7 +27,6 @@ sessionInfo()
 
 rstan_options(auto_write = TRUE)
 ## parameters for the analysis
-Dmax = 5.5
 RUN_MODELS = F
 
 my_probs = c(0.025, 0.1, .5, .9, .975)
@@ -39,11 +38,12 @@ source('functions.R')
 *Set up analysis*
 
 ```{r load_data}
-mITT_threshold <- 250
+Dmax =  8 # Maximu follow-up duration to be included: 5.5 or 8 
+mITT_threshold <- 250 # Threshold for baseline viral loads to be considered mITT
 use_threshold = T
 
-Type <- "A" # "A" or "B" or c("A", "B")
-Lab <- ifelse(length(Type)>1, "A_and_B", Type)
+Type <- "A" # Flu types: "A" or "B" or c("A", "B")
+Lab <- ifelse(length(Type)>1, "A_and_B", Type) # To be used in output file names
 ```
 
 ```{r define_population}
@@ -51,76 +51,35 @@ Lab <- ifelse(length(Type)>1, "A_and_B", Type)
 # set as file with relevant dataset
 f_name = 'Analysis_Data/no_study_drug_analysis.csv'
 adastra_dat = read.csv(f_name)
+```
+
+```{r}
 adastra_dat$Rand_date = as.POSIXct(adastra_dat$Rand_date)
-```
+adastra_dat$Sex <- plyr::mapvalues(x = as.numeric(adastra_dat$Sex),
+                                   from = c(1,2),
+                                   to = c('Male','Female'))
 
-## *Make modified intention to treat population*
+# Marked patients with some missing PCR data AND baseline viral density less than threshold
+adastra_dat <- make_mITT(adastra_dat, use_threshold, mITT_threshold, Type)
+```
 
 ```{r}
-# Check missing PCR data by time point
-check_PCR_missing <- adastra_dat %>%
-  mutate(count = 1,
-         Timepoint_ID = paste0("D", Timepoint_ID)) %>%
-  group_by(ID, Timepoint_ID) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = Timepoint_ID, values_from = n) %>%
-  mutate(all_pcr_early = !is.na(sum(D0, D1, D2, D3)))
-
-adastra_dat <- merge(adastra_dat, check_PCR_missing[,c("ID", "all_pcr_early")], all.x = T)
-
-```
-
-```{r make_analysis_data}
-#| echo: false
-adastra_dat = adastra_dat %>% group_by(ID) %>%
-  mutate(
-    baseline_vl = mean(log10_viral_load[which(Timepoint_ID==0)]),
-    mITT = ifelse(use_threshold, baseline_vl > log10(mITT_threshold), T) &
-      all_pcr_early) 
-
-
 pop_table = adastra_dat %>% distinct(ID, .keep_all = T) %>% arrange(baseline_vl)
-print(table(Intervention=pop_table$Trt, `mITT population` = pop_table$mITT))
-table(pop_table$fluType, pop_table$mITT)
+
+writeLines(sprintf('Settings:\nInput data: %s \nData update: %s \nMaximum follow-up duration: %s days \nmITT threshold: %s \nFlu type: %s \nTotal patient number: %s \nmITT population: %s',
+                   f_name,
+                   file.info(f_name)$ctime %>% as.Date(),
+                   ceiling(Dmax - 1),
+                   ifelse(!use_threshold, "none", paste0(mITT_threshold, " genomes/mL")),
+                   Lab,
+                   nrow(pop_table),
+                   sum(pop_table$mITT)   
+                   ))
 ```
 
-## Plot recruitment
-
-```{r timeline}
-timeline <- plot_randomisation(adastra_dat %>% distinct(ID, Rand_date, Trt, fluType))
-timeline
-```
-
-## *Baseline characteristics*
+### Make analysis dataset
 
 ```{r}
-adastra_dat = adastra_dat %>% filter(mITT, fluType %in% Type) %>% group_by(ID, Timepoint_ID) %>%
-  mutate(daily_VL = mean(log10_viral_load),
-         daily_CT = mean(CT)) %>% 
-  ungroup() %>%
-  mutate(Site = as.factor(Site),
-         Study_time = as.numeric(difftime(Rand_date,min(Rand_date),units = 'weeks')),
-         Study_time = scale(Study_time) #normalise
-  )
-```
-
-```{r base_vl_plot}
-base_vl_plot <-  plot_vl_base(adastra_dat, fluType = T) 
-base_vl_plot
-```
-
-```{r}
-plot_name <- paste0('Plots/viral_dynamics_type_', Type,'.png')
-
-
-png(plot_name, width = ifelse(length(Type) > 1, 8, 4), height = 4, units = 'in', res = 350)
-base_vl_plot
-dev.off()
-```
-
-### For all analyses
-
-```{r analysis_data}
 #| echo: false
 adastra_dat_analysis =
   adastra_dat %>% ungroup() %>%
@@ -129,8 +88,18 @@ adastra_dat_analysis =
   mutate(RnaseP_scaled = scale(40 - CT_RNaseP,scale = F),
          Mean_age = mean(Age[!duplicated(ID)]),
          SD_age = sd(Age[!duplicated(ID)]),
-         Age_scaled = (Age-Mean_age)/SD_age)
+         Age_scaled = (Age-Mean_age)/SD_age,
+         Site = as.factor(Site),
+         Study_time = as.numeric(difftime(Rand_date,min(Rand_date),units = 'weeks')),
+         Study_time = scale(Study_time)) %>%
+  group_by(ID, Timepoint_ID) %>%
+  mutate(daily_VL = mean(log10_viral_load),
+         daily_CT = mean(CT))
+```
 
+## Summarize baseline characteristics
+
+```{r analysis_data}
 Baseline_data = adastra_dat_analysis %>% ungroup() %>% 
   filter(Timepoint_ID==0) %>% 
   distinct(ID, .keep_all = T) %>%
@@ -177,23 +146,22 @@ writeLines(sprintf('Analysis dataset contains %s patients and %s datapoints (%s 
 covs_base = c('symptomDay','fluType', 'Study_time', 'Age_scaled')
 covs_full=c(covs_base)
 
-stan_inputs <- list()
-trt_formulas <- c("~ Trt")
-for(i in 1:length(trt_formulas)){
-  stan_inputs[[i]] = 
+stan_inputs <- NULL
+#trt_formulas <- c("~ Trt")
+  stan_inputs = 
     make_stan_inputs(input_data_fit = adastra_dat_analysis,
                      int_covs_base = covs_base,
                      int_covs_full = covs_full,
                      slope_covs_base = c('fluType','Study_time'),
                      slope_covs_full = covs_full,
-                  #   trt_frmla = formula(trt_formulas[i]),
                      Dmax = Dmax)
-}
+
 ```
 
 ```{r setup_models}
 all_mods = c("Stan_models/Exponential_decay_model_basic.stan",
-             "Stan_models/Bi_exponential_decay_model_basic.stan")
+             "Stan_models/Bi_exponential_decay_model_basic.stan",
+             "Stan_models/Up_and_down_model_basic.stan")
 #list.files('Stan_models',full.names = TRUE,pattern = '*stan')
 
 model_settings = expand.grid(mod = all_mods,
@@ -212,7 +180,7 @@ writeLines(sprintf('We are running all models with %s chains and %s samples for 
                    unique(model_settings$Nthin), 
                    unique(model_settings$Nchain*(model_settings$Niter-model_settings$Nwarmup)/model_settings$Nthin)))
 
-model_setup_f_name = paste0('Rout/model_settings_type_', Lab, '.RData')
+model_setup_f_name = paste0('Rout/model_settings_type_', Lab, '_', ceiling(Dmax-1), 'd.RData')
 save(model_settings, 
      adastra_dat_analysis,
      stan_inputs, 
@@ -221,19 +189,17 @@ save(model_settings,
 ```
 
 ```{r}
-i <- 1
-stan_input_job = stan_inputs[[i]]
+analysis_data_stan = stan_inputs$analysis_data_stan
 
- analysis_data_stan = stan_input_job$analysis_data_stan
-  #analysis_data_stan$trt_mat = stan_input_job$Treatment_matrix
+  #analysis_data_stan$trt_mat = stan_inputs$Treatment_matrix
   #analysis_data_stan$K_trt = ncol(analysis_data_stan$trt_mat)
   
-  # x_intercept = stan_input_job$cov_matrices$X_int[[model_settings$cov_matrices[i]]]
+  # x_intercept = stan_inputs$cov_matrices$X_int[[model_settings$cov_matrices[i]]]
   # if(ncol(x_intercept)==0) x_intercept = array(0, dim=c(nrow(x_intercept),1))
   # analysis_data_stan$x_intercept = x_intercept
   # analysis_data_stan$K_cov_intercept= ncol(x_intercept)
   
-  # x_slope = stan_input_job$cov_matrices$X_slope[[model_settings$cov_matrices[i]]]
+  # x_slope = stan_inputs$cov_matrices$X_slope[[model_settings$cov_matrices[i]]]
   # if(ncol(x_slope)==0) x_slope = array(0, dim=c(nrow(x_slope),1))
   # analysis_data_stan$x_slope = x_slope
   # analysis_data_stan$K_cov_slope=ncol(x_slope)
@@ -242,8 +208,12 @@ stan_input_job = stan_inputs[[i]]
 ```
 
 ```{r}
-i <- 2
+i <- 3
+writeLines(sprintf('Working on the following model: %s',
+                   model_settings[i,]$mod))
+```
 
+```{r}
 mod = stan_model(file = as.character(model_settings$mod[i])) # compile 
 ```
 
@@ -261,19 +231,23 @@ out = sampling(mod,
                # pars=c('alpha_0', 'beta_0', 't_dof',
                #        'sigma_logvl', 'sigmasq_u', 'L_Omega'), # only save trt effect parameter 
                include=T)
-```
 
-```{r}
-file_name = paste0('Rout/model_fits_type_', Lab, '_',i,'.RData') 
-```
-
-```{r}
+file_name = paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
+print(file_name)
 save(out,
      file = file_name)
 ```
 
+## Outputs
+
 ```{r}
-load('Rout/model_fits_type_A_1.RData')
+Lab <- "A"
+i <- 3
+Dmax <- 8
+
+f_name <- paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
+
+load(f_name)
 ```
 
 ```{r}
@@ -282,7 +256,9 @@ trace
 ```
 
 ```{r}
-png("Plots/trace_plot.png", width = 12, height = 6, units = "in", res = 350)
+file_name = paste0('Plots/trace_plot_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.png') 
+
+png(file_name, width = 12, height = 6, units = "in", res = 350)
 trace
 dev.off()
 ```
@@ -290,10 +266,9 @@ dev.off()
 ```{r}
 post <- rstan::extract(out,c("sigma_logvl", "alpha_0", "beta_0", 'sigmasq_u', "theta_rand_id"))
 
-
 post_summary <- NULL
-for(i in 1:length(post)){
-  post_summary <- rbind(post_summary, apply(as.data.frame(post[i]),2, quantile, c(0.025, 0.5, 0.975)) %>% t())
+for(j in 1:length(post)){
+  post_summary <- rbind(post_summary, apply(as.data.frame(post[j]),2, quantile, c(0.025, 0.5, 0.975)) %>% t())
 }
 colnames(post_summary) <- c('Low', "Med", "Up")
 post_summary <- post_summary %>%
@@ -310,8 +285,13 @@ post_summary
 ```
 
 ```{r}
+file_name = paste0('Outputs/posterior_estimates', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.csv') 
+write.csv(post_summary, file_name, row.names = F)
+```
+
+```{r}
 model_selects <- 1
-ff = 'Rout/model_fits_type_A_1.RData'
+ff = "Rout/model_fits_type_A_7d_job_3.RData"
 
 ind_plot_list <- plot_inds(model_selects, Baseline_data)
 ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4)#, common.legend = T, legend = "right")
@@ -345,8 +325,8 @@ intercept_coefs_summary <- as.data.frame(t(apply(intercept_coefs$intercept_coefs
 colnames(intercept_coefs_summary) <- c("Low", "Med", "Up")
 
 #Extract covariate names
-cov_names <- colnames(stan_input_job$cov_matrices$X_slope[[cov]])
-cov_names_intercept <- colnames(stan_input_job$cov_matrices$X_slope[[cov_intercept]])
+cov_names <- colnames(stan_inputs$cov_matrices$X_slope[[cov]])
+cov_names_intercept <- colnames(stan_inputs$cov_matrices$X_slope[[cov_intercept]])
 
 slope_coefs_summary$cov <- cov_names
 intercept_coefs_summary$cov <- cov_names_intercept
@@ -420,4 +400,37 @@ slope_to_hl(post_summary[3,2:4]) %>% round(1)
 # Half-life flu B
 quantile(post$beta_0 * exp(slope_coefs$slope_coefs[,1]), c(0.025, 0.5, 0.975)) %>%
   slope_to_hl() %>% round(1)
+```
+
+## Plot recruitment
+
+```{r timeline}
+timeline <- plot_randomisation(adastra_dat %>% distinct(ID, Rand_date, Trt, fluType))
+timeline
+```
+
+## *Baseline characteristics*
+
+```{r}
+adastra_dat = adastra_dat %>% filter(mITT, fluType %in% Type) %>% group_by(ID, Timepoint_ID) %>%
+  mutate(daily_VL = mean(log10_viral_load),
+         daily_CT = mean(CT)) %>% 
+  ungroup() %>%
+  mutate(Site = as.factor(Site),
+         Study_time = as.numeric(difftime(Rand_date,min(Rand_date),units = 'weeks')),
+         Study_time = scale(Study_time) #normalise
+  )
+```
+
+```{r base_vl_plot}
+base_vl_plot <-  plot_vl_base(adastra_dat, fluType = T) 
+base_vl_plot
+```
+
+```{r}
+plot_name <- paste0('Plots/viral_dynamics_type_', Type,'.png')
+
+png(plot_name, width = ifelse(length(Type) > 1, 8, 4), height = 4, units = 'in', res = 350)
+base_vl_plot
+dev.off()
 ```

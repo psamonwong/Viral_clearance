@@ -19,13 +19,7 @@ data {
   real<lower=0,upper=Time_max> obs_day[Ntot];  // Time since randomisation for sample
   real log_10_vl[Ntot];                        // log base 10 viral load in copies per mL
   real log10_cens_vl[Ntot];                    // censoring value for censored observation
- // int<lower=1> K_trt;                          // Number of treatment arms
-//  matrix[Ntot,K_trt] trt_mat;                  // Trt matrix
- // int<lower=0> K_cov_intercept;                // number of columns in covariate design matrix for intercept
-//  matrix[Ntot,K_cov_intercept] x_intercept;    // covariate design matrix for regression onto intercept
-//  int<lower=0> K_cov_slope;                    // number of columns in covariate design matrix for slope
-//  matrix[Ntot,K_cov_slope] x_slope;            // covariate design matrix for regression onto slope
-
+ 
   // priors
   real alpha_0_prior_mean; // prior mean intercept
   real alpha_0_prior_sd;   // prior sd intercept
@@ -33,11 +27,6 @@ data {
   real beta_0_prior_mean;  // prior mean slope
   real beta_0_prior_sd;    // prior sd slope
   
- // real slope_coefs_sd;     // prior sd for prior on covariate effect on slope
-//  real intercept_coefs_sd; // prior sd for prior on covariate effect on intercept
-
-  //real trt_effect_sd;   // prior sd on treatment effect
-
   real sigma_logvl_mean;   // prior mean of sd in error model
   real sigma_logvl_sd;     // prior sd of sd in error model
 

@@ -12,9 +12,9 @@ get_priors = function(){
                       t_max_pop_mean = -3,
                       t_max_pop_sd = 3,
                       A0_prior = 5,
-                      B0_prior = 5,
-                      coef_1_prior = -0.5,
-                      coef_2_prior = -0.5,
+                      B0_prior = 2,
+                      coef_1_prior = 1,
+                      coef_2_prior = 0.25,
                       prior_intercept_sd = 1,
                       prior_coef_sd = 1)
   
