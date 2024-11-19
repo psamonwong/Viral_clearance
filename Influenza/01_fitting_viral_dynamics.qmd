@@ -277,7 +277,7 @@ load('Rout/model_fits_type_A_1.RData')
 ```
 
 ```{r}
-trace <- traceplot(out, pars = c("sigma_logvl", "alpha_0", "beta_0", "sigmasq_u"))
+trace <- traceplot(out, pars = c("sigmasq_u"))
 trace
 ```
 
