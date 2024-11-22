@@ -38,7 +38,7 @@ source('functions.R')
 *Set up analysis*
 
 ```{r load_data}
-Dmax =  8 # Maximu follow-up duration to be included: 5.5 or 8 
+Dmax =  14.5 # Maximu follow-up duration to be included: 5.5 or 8 
 mITT_threshold <- 250 # Threshold for baseline viral loads to be considered mITT
 use_threshold = T
 
@@ -208,9 +208,13 @@ analysis_data_stan = stan_inputs$analysis_data_stan
 ```
 
 ```{r}
-i <- 3
+i <- 2
 writeLines(sprintf('Working on the following model: %s',
                    model_settings[i,]$mod))
+
+model_settings$Nwarmup = 100
+model_settings$Niter = 500
+model_settings$Nthin = 4
 ```
 
 ```{r}
@@ -225,11 +229,9 @@ out = sampling(mod,
                chain=model_settings$Nchain[i],
                thin=model_settings$Nthin[i],
                warmup=model_settings$Nwarmup[i],
-               save_warmup = FALSE,
+               save_warmup = T,
                seed=i,
                cores = 4,
-               # pars=c('alpha_0', 'beta_0', 't_dof',
-               #        'sigma_logvl', 'sigmasq_u', 'L_Omega'), # only save trt effect parameter 
                include=T)
 
 file_name = paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
@@ -242,8 +244,8 @@ save(out,
 
 ```{r}
 Lab <- "A"
-i <- 3
-Dmax <- 8
+i <- 2
+Dmax <- 14.5
 
 f_name <- paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
 
@@ -251,7 +253,7 @@ load(f_name)
 ```
 
 ```{r}
-trace <- traceplot(out, pars = c("sigmasq_u"))
+trace <- traceplot(out, pars = c("sigmasq_u", "coef", "intercept"))
 trace
 ```
 
@@ -291,7 +293,7 @@ write.csv(post_summary, file_name, row.names = F)
 
 ```{r}
 model_selects <- 1
-ff = "Rout/model_fits_type_A_7d_job_3.RData"
+ff = "Rout/model_fits_type_A_14d_job_2.RData"
 
 ind_plot_list <- plot_inds(model_selects, Baseline_data)
 ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4)#, common.legend = T, legend = "right")
