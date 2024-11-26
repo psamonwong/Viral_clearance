@@ -25,8 +25,8 @@ bi_exp <- function(a0, b0, alpha, beta, tmax){
 bi_exp(a0 = 6, b0 = 2, alpha = 1, beta = 0.1, tmax = 14)
 
 
-ggarrange(bi_exp(a0 = 5, b0 = 2, alpha = 1, beta = 0.25, tmax = 14),
-          bi_exp(a0 = 5, b0 = 2, alpha = 1*2, beta = 0.01, tmax = 14),
-          bi_exp(a0 = 5, b0 = 2, alpha = 1, beta = 0.01*2, tmax = 14),
-          bi_exp(a0 = 5, b0 = 2, alpha = 1*2, beta = 0.01*2, tmax = 14),
+ggarrange(bi_exp(a0 = 6, b0 = 2, alpha = 1, beta = 0.1, tmax = 14),
+          bi_exp(a0 = 6, b0 = 2, alpha = 1*2, beta = 0.1, tmax = 14),
+          bi_exp(a0 = 6, b0 = 2, alpha = 1, beta = 0.1*2, tmax = 14),
+          bi_exp(a0 = 6, b0 = 2, alpha = 1*2, beta = 0.1*2, tmax = 14),
           ncol = 2, nrow = 2, labels = "AUTO", align = "hv")

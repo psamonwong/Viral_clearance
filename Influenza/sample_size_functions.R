@@ -73,7 +73,7 @@ sim_individuals = function(thetas, # posterior distribution: a stan object
     ind_patient = which(Log_VL$ID==n)
     xs = f_sim(t_design = t_design,
                my_intercept = thetas$alpha_0[post_i]+thetas_rand[n,1],
-               my_slope = thetas$beta_0[post_i] * exp(thetas_rand[n,2]) * trt_effects[Trt_arm[n]],
+               my_slope = thetas$beta_0[post_i] * exp(thetas_rand[n,2] + log(trt_effects[Trt_arm[n]])),
                sigma_vl = thetas$sigma_logvl[post_i],
                t_dof = thetas$t_dof[post_i],
                LOD=LOD)
