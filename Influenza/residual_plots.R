@@ -58,7 +58,7 @@ for(i in 1:nrow(ID_map)){
     geom_point(data = plot_data, aes(x = Time, y = log10_viral_load, shape = censor),
                size = 2.5, alpha = 0.7) +
     geom_ribbon(data = plot_data, aes(x = Time, ymin = low, ymax = up, fill = model), alpha = 0.2) +
-    geom_line(data = plot_data, aes(x = Time, y = med, col = model), linewidth = 0.75) +
+    geom_line(data = plot_data, aes(x = Time, y = med, col = model), linewidth = 0.75, alpha = 0.75) +
     theme_bw() +
     scale_y_continuous(labels=label_math(), breaks = seq(0,10,2)) +
     coord_cartesian(ylim = c(0,9), xlim = c(0,5))+
@@ -70,8 +70,8 @@ for(i in 1:nrow(ID_map)){
       plot.title = element_text(face = "bold", hjust = 0.5, size = 8),
       legend.position = "right",
       plot.margin = unit(c(0.1,0.1,0.1,0.1), 'lines')) +
-    scale_color_manual(values = c("#1640D6", "#BE3144", "black"), name = "Model") +
-    scale_fill_manual(values = c("#1640D6", "#BE3144",  "black"), name = "Model") +
+    scale_color_manual(values = c("#1640D6", "#BE3144", "gray20"), name = "Model") +
+    scale_fill_manual(values = c("#1640D6", "#BE3144",  "gray20"), name = "Model") +
     scale_shape_manual(values = c(17, 16), guide = "none", drop=FALSE) +
     ggtitle(lab)
   
