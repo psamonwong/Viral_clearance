@@ -38,11 +38,11 @@ source('functions.R')
 *Set up analysis*
 
 ```{r load_data}
-Dmax =  14.5 # Maximu follow-up duration to be included: 5.5 or 8 
+Dmax =  5.5 # Maximu follow-up duration to be included: 5.5 or 8 
 mITT_threshold <- 250 # Threshold for baseline viral loads to be considered mITT
 use_threshold = T
 
-Type <- "A" # Flu types: "A" or "B" or c("A", "B")
+Type <- c("A", "B") # Flu types: "A" or "B" or c("A", "B")
 Lab <- ifelse(length(Type)>1, "A_and_B", Type) # To be used in output file names
 ```
 
@@ -208,20 +208,13 @@ analysis_data_stan = stan_inputs$analysis_data_stan
 ```
 
 ```{r}
-i <- 2
-writeLines(sprintf('Working on the following model: %s',
+
+for(i in 1:length(all_mods)){
+  writeLines(sprintf('Working on the following model: %s',
                    model_settings[i,]$mod))
 
-model_settings$Nwarmup = 100
-model_settings$Niter = 500
-model_settings$Nthin = 4
-```
-
-```{r}
 mod = stan_model(file = as.character(model_settings$mod[i])) # compile 
-```
 
-```{r}
 out = sampling(mod, 
                data=c(analysis_data_stan,
                       all_priors[[model_settings$prior[i]]]),
@@ -235,17 +228,22 @@ out = sampling(mod,
                include=T)
 
 file_name = paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
+
 print(file_name)
+
 save(out,
      file = file_name)
+}
+
+
 ```
 
 ## Outputs
 
 ```{r}
-Lab <- "A"
-i <- 2
-Dmax <- 14.5
+Lab <- "A_and_B"
+i <- 3
+Dmax <- 5.5
 
 f_name <- paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
 
@@ -253,7 +251,7 @@ load(f_name)
 ```
 
 ```{r}
-trace <- traceplot(out, pars = c("sigmasq_u", "coef", "intercept"))
+trace <- traceplot(out, pars = c("sigmasq_u"))
 trace
 ```
 
