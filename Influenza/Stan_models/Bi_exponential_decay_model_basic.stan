@@ -116,7 +116,7 @@ generated quantities {
   
   for(i in 1:n_id){
     int j = ind_start[i];
-   slope_1[i] = (coef[1]*exp(theta_rand_id[id[j]][4]));
+    slope_1[i] = (coef[1]*exp(theta_rand_id[id[j]][4]));
     slope_2[i] = (coef[2]*exp(theta_rand_id[id[j]][2]));
  }
 }
