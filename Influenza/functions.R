@@ -1012,6 +1012,8 @@ make_mITT <- function(adastra_dat, use_threshold, mITT_threshold, Type){
   
   adastra_dat <- merge(adastra_dat, check_PCR_missing[,c("ID", "all_pcr_early")], all.x = T)
   
+  if(Type == "All"){Type <- c("A", "B")}
+  
   # Marked patients with some missing PCR data AND baseline viral density less than threshold 
   adastra_dat = adastra_dat %>% group_by(ID) %>%
     mutate(
