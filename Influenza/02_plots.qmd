@@ -1,0 +1,177 @@
+---
+title: "Characterizing influenza viral kinetics"
+author: "Phrutsamon Wongnak"
+format: html
+editor: visual
+---
+
+```{r}
+#library(conflicted)
+library(rstan)
+library(tidyverse)
+library(kableExtra)
+library(finalfit)
+library(RColorBrewer)
+library(lubridate)
+library(brms)
+library(ggplot2)
+library(ggpubr)
+library(scales)
+library(cowplot)
+library(grid)
+library(webshot2)
+library(webshot)
+library(magick)
+
+#conflicts_prefer(dplyr::filter)
+
+## information on software/hardware used
+version
+sessionInfo()
+
+rstan_options(auto_write = TRUE)
+## parameters for the analysis
+RUN_MODELS = F
+
+my_probs = c(0.025, 0.1, .5, .9, .975)
+source('functions.R')
+source('priors.R')
+```
+
+## *Load data*
+
+*Set up analysis*
+
+```{r}
+model_settings <- read.csv("Outputs/model_settings.csv")
+Dmax <- 5.5
+Type <- "All"
+
+ind <- which(model_settings$Dmax == Dmax & model_settings$Type == Type)[1]
+```
+
+```{r}
+#| echo: false
+load(paste0("Rout/model_settings_job_", ind, ".RData"))
+load(paste0("Rout/model_fits_job_", ind, ".RData"))
+```
+
+```{r}
+Plot_now = F
+
+if(Plot_now){
+plot_name <- paste0('Plots/viral_dynamics_type_', Type,'.png')
+
+png(plot_name, width = ifelse(Type == "All", 8, 4), height = 4, units = 'in', res = 350)
+print(plot_vl_base(adastra_dat_analysis, fluType = T) )
+dev.off()  
+}
+
+
+```
+
+```{r}
+adastra_dat_analysis %>%
+  group_by(fluType, Timepoint_ID) %>%
+  summarise(censored = sum(censor == "left"), .groups = "keep",
+            n = n(),
+            percentage = round(censored*100/n))
+```
+
+```{r}
+adastra_dat_analysis %>%
+  group_by(Timepoint_ID) %>%
+  summarise(censored = sum(censor == "left"), .groups = "keep",
+            n = n(),
+            percentage = round(censored*100/n))
+```
+
+```{r}
+alpha_0 <-  rstan::extract(out, pars = 'alpha_0')$alpha_0 %>% median()
+beta_0 <-  rstan::extract(out, pars = 'beta_0')$beta_0 %>% median()
+
+slope <-  rstan::extract(out, pars = 'slope')
+slope <- apply(slope$slope, 2, median)
+
+preds <-  rstan::extract(out, pars = 'preds')
+preds <- apply(preds$preds, 2, median)
+
+preds_d0 <- preds[stan_inputs$analysis_data_stan$ind_start]
+
+fluType <- stan_inputs$cov_matrices$X_int[[1]][,2][stan_inputs$analysis_data_stan$ind_start]
+fluType <- ifelse(fluType == 1, "B", "A")
+
+symptomDay <- stan_inputs$cov_matrices$X_int[[1]][,1][stan_inputs$analysis_data_stan$ind_start]
+```
+
+```{r}
+dat_plot <- data.frame(fluType, preds_d0, slope, symptomDay = as.factor(symptomDay))
+G <- ggplot(dat_plot, aes(y = preds_d0, x = slope, col = fluType, shape = symptomDay)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_point(x = beta_0, y = alpha_0, size = 4, col = "#2A3335", shape = 17, alpha = 0.8) +
+  theme_bw(base_size = 13) +
+  xlim(-5,0) +
+  xlab("Viral clearance rate \n(log10 genomes/mL/day)") +
+  ylab("Estimated admission viral densities \n(log10 genomes/mL)") +
+  scale_y_continuous(breaks = seq(0,8,1)) +
+  scale_color_manual(values = c("#EE4266", "#387ADF"), name = "Influenza type")
+G
+```
+
+```{r}
+Plot_now = T
+
+if(Plot_now){
+plot_name <- paste0('Plots/profile_map_', Type, "_", floor(Dmax), '.png')
+
+png(plot_name, width = 8, height = 5, units = 'in', res = 350)
+print(G)
+dev.off()  
+}
+
+```
+
+```{r}
+cor.test(dat_plot$preds_d0, dat_plot$slope, method = "pearson")
+
+
+
+
+```
+
+```{r}
+mod <- lm(slope ~ preds_d0 + fluType, data = dat_plot)
+summary(mod)
+```
+
+```{r}
+model_settings <- read.csv("Outputs/model_settings.csv")
+Dmax <- 5.5
+Type <- "All"
+
+ind <- which(model_settings$Dmax == Dmax & model_settings$Type == Type)
+```
+
+```{r}
+
+data_plot <- list()
+
+for(i in 1:length(ind)){
+  load(paste0("Rout/model_settings_job_", ind[i], ".RData"))
+  load(paste0("Rout/model_fits_job_", ind[i], ".RData"))
+  
+  data_plot[[i]] <- adastra_dat_analysis
+  
+  preds <-  rstan::extract(out, pars = 'preds')
+  data_plot[[i]]$preds <- apply(preds$preds, 2, median)
+  data_plot[[i]]$mod <- model_settings$mod[i]
+  
+}
+
+data_Plot <- do.call("rbind", data_plot)
+data_Plot_median <- data_Plot %>% distinct(ID, Timepoint_ID, mod, .keep_all = T) %>%
+  group_by(Timepoint_ID, mod, fluType) %>%
+  summarise(med = median(preds))
+
+
+```

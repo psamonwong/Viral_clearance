@@ -20,6 +20,7 @@ library(scales)
 library(cowplot)
 library(grid)
 library(webshot2)
+library(webshot)
 library(magick)
 
 #conflicts_prefer(dplyr::filter)
@@ -64,6 +65,7 @@ model_settings$Nchain = 4
 model_settings$prior = 1
 model_settings$cov_matrices = 1
 
+write.csv(model_settings, "Outputs/model_settings.csv", row.names = F)
 ```
 
 ```{r}
@@ -76,6 +78,7 @@ adastra_dat$Rand_date = as.POSIXct(adastra_dat$Rand_date)
 adastra_dat$Sex <- plyr::mapvalues(x = as.numeric(adastra_dat$Sex),
                                    from = c(1,2),
                                    to = c('Male','Female'))
+adastra_dat$inf_diagyn <- as.factor(adastra_dat$inf_diagyn)
 ```
 
 ```{r}
@@ -125,8 +128,8 @@ for(i in 1:nrow(model_settings)){
   tab.ff <- Baseline_data %>% 
   summary_factorlist(
     dependent = "Trt", # name of grouping / treatment variable
-    explanatory = c("Site", "Age", 'BMI', 
-                    #'vaccine',
+    explanatory = c("Site", "Age", 'BMI', 'weight',
+                    'vaccine', 'inf_diagyn',
                     "Baseline.viral.load",'Sex', 'fluType' ,
                     'symptomDay'
     ),
@@ -143,7 +146,7 @@ for(i in 1:nrow(model_settings)){
   ) %>%
   kable_classic(full_width = FALSE)
 tab.ff
-save_kable(tab.ff,file = paste0('Plots/Baseline_Characteristics/job_', i, '.png'))
+save_kable(tab.ff,file = paste0('Plots/Baseline_Characteristics/job_', i, '.html'))
 
 
 # Analysis data
@@ -209,8 +212,6 @@ save(out,
 }
 ```
 
-
-
 ```{r}
 pop_table = adastra_dat %>% distinct(ID, .keep_all = T) %>% arrange(baseline_vl)
 
@@ -224,8 +225,6 @@ writeLines(sprintf('Settings:\nInput data: %s \nData update: %s \nMaximum follow
                    sum(pop_table$mITT)   
                    ))
 ```
-
-
 
 ```{r}
 
@@ -272,6 +271,4 @@ print(file_name)
 save(out,
      file = file_name)
 }
-
-
 ```

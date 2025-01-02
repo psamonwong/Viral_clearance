@@ -940,8 +940,7 @@ plot_inds <- function(model_selects, Baseline_data){
 
 plot_vl_base <- function(dataplot, fluType = F){
   dataplot <- dataplot %>%
-    distinct(ID, Timepoint_ID, daily_VL, .keep_all = T) %>%
-    filter(Timepoint_ID <= 5) 
+    distinct(ID, Timepoint_ID, daily_VL, .keep_all = T) 
   
   dataplot$fluType <- as.factor(dataplot$fluType)
   levels(dataplot$fluType) <- paste0("Influenza ", levels(dataplot$fluType))
@@ -953,6 +952,7 @@ plot_vl_base <- function(dataplot, fluType = F){
       group_by(Timepoint_ID, fluType) %>%
       summarise(median_VL = median(daily_VL), .groups = 'drop');
     f_tab <- dataplot %>%
+      filter(Timepoint_ID == 0) %>%
       distinct(ID, fluType) %>%
       group_by(fluType) %>%
       summarise(n = n()) %>%
@@ -962,38 +962,54 @@ plot_vl_base <- function(dataplot, fluType = F){
       group_by( Timepoint_ID) %>%
       summarise(median_VL = median(daily_VL), .groups = 'drop');
     f_tab <- dataplot %>%
+      filter(Timepoint_ID == 0) %>%
       distinct(ID) %>%
       summarise(n = n()) %>%
       as.data.frame()
   }
   
   f_tab$lab <- paste0("n = ", f_tab$n)
+  dataplot$Timepoint_ID <- as.numeric(as.character(dataplot$Timepoint_ID))
+  dataplot_median$Timepoint_ID <- as.numeric(as.character(dataplot_median$Timepoint_ID))
   
   
-  G <- ggplot(dataplot, aes(x = Timepoint_ID, y = daily_VL)) +
+  
+  G <- ggplot(dataplot, aes(x = as.numeric(Timepoint_ID), y = daily_VL)) +
     geom_point(alpha = 0.25, size = 2, aes(shape = censor),
                stroke = 0.5) +
-    geom_line(aes(group = ID), alpha = 0.25, linewidth = 0.4) +
-    geom_line(data = dataplot_median, aes(x =  Timepoint_ID, y = median_VL, group = 1, col = fluType), 
-              linewidth = 1.2, linetype = 1) +
-    geom_point(data = dataplot_median, aes(x = Timepoint_ID, y = median_VL, fill = fluType), 
+    geom_line(data = dataplot %>% filter(Timepoint_ID <= 7), 
+              mapping =  aes(x = as.numeric(Timepoint_ID), y = daily_VL, group = ID), 
+    alpha = 0.25, linewidth = 0.4) +
+    
+    geom_line(data = dataplot %>% filter(Timepoint_ID >= 7), 
+              mapping =  aes(x = as.numeric(Timepoint_ID), y = daily_VL, group = ID), 
+              alpha = 0.25, linewidth = 0.4, linetype = "dashed") +
+  
+    geom_line(data = dataplot_median %>% filter(Timepoint_ID <= 7), aes(x =  as.numeric(Timepoint_ID), y = median_VL, group = 1, col = fluType), 
+              linewidth = 1.2) +
+    
+    geom_line(data = dataplot_median %>% filter(Timepoint_ID >= 7), aes(x =  as.numeric(Timepoint_ID), y = median_VL, group = 1, col = fluType), 
+              linewidth = 0.75, linetype ="dashed") +
+    
+    geom_point(data = dataplot_median, aes(x = as.numeric(Timepoint_ID), y = median_VL, fill = fluType), 
                size = 3.5, shape = 24, col = "black", stroke = 0.75) +
     scale_shape_manual(values = c(25, 21), guide = NULL) +
     scale_color_manual(label = labels, values = c("#EE4266", "#387ADF"), name = "") +
     scale_fill_manual(label = labels, values = c("#EE4266", "#387ADF"), name = "") +
     theme_bw() +
     scale_y_continuous(labels=label_math(), breaks = seq(0,10,2), limits = c(0,9)) +
+    scale_x_continuous(breaks = seq(0,14,2)) +
     xlab("Time since randomisation (days)") +
-    ylab("Viral densities (log10 genomes/mL)") + 
+    ylab("Viral densities (genomes/mL)") + 
     theme(axis.title  = element_text(face = "bold"),
           plot.title = element_text(face = "bold"),
           legend.position = "none",
           axis.text = element_text(size = 10),
           strip.text = element_text(size = 10, face = 'bold')) +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed", linewidth = 0.75) +
-    geom_text(data = f_tab, x = 6, y = 9, aes(label = lab),
+    geom_text(data = f_tab, x = 5, y = 9, aes(label = lab),
               hjust = 1, vjust = 1) +
-    ggtitle("Viral density dynamics")
+    ggtitle("Viral density dynamics") 
   
   if(fluType){G <- G +  facet_grid(.~fluType)}
   G
