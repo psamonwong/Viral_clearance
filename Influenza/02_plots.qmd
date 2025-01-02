@@ -106,15 +106,23 @@ symptomDay <- stan_inputs$cov_matrices$X_int[[1]][,1][stan_inputs$analysis_data_
 
 ```{r}
 dat_plot <- data.frame(fluType, preds_d0, slope, symptomDay = as.factor(symptomDay))
+
+cor <- cor.test(dat_plot$preds_d0, dat_plot$slope, method = "pearson")
+lab <- paste0('Correlation coefficient:\n', round(cor$estimate,2), " [95%CI: ", round(cor$conf.int[1],2), " to ", round(cor$conf.int[2],2), "]")
+
+
 G <- ggplot(dat_plot, aes(y = preds_d0, x = slope, col = fluType, shape = symptomDay)) +
-  geom_point(size = 3, alpha = 0.8) +
-  geom_point(x = beta_0, y = alpha_0, size = 4, col = "#2A3335", shape = 17, alpha = 0.8) +
+  geom_point(size = 3.5, alpha = 0.8) +
+  geom_point(x = beta_0, y = alpha_0, size = 5.5, col = "#2A3335", shape = 18, alpha = 0.8) +
   theme_bw(base_size = 13) +
   xlim(-5,0) +
   xlab("Viral clearance rate \n(log10 genomes/mL/day)") +
   ylab("Estimated admission viral densities \n(log10 genomes/mL)") +
   scale_y_continuous(breaks = seq(0,8,1)) +
-  scale_color_manual(values = c("#EE4266", "#387ADF"), name = "Influenza type")
+  scale_color_manual(values = c("#EE4266", "#387ADF"), name = "Influenza type") +
+  scale_shape_manual(values = c(16, 17, 15), name = "Day(s) since\nsymptom onset") +
+  #annotate('text', x = -4, y = 6, label = lab) +
+  coord_flip()
 G
 ```
 
@@ -132,11 +140,7 @@ dev.off()
 ```
 
 ```{r}
-cor.test(dat_plot$preds_d0, dat_plot$slope, method = "pearson")
-
-
-
-
+cor.test(dat_plot$preds_d0, dat_plot$slope, method = "spearman")
 ```
 
 ```{r}
@@ -147,31 +151,182 @@ summary(mod)
 ```{r}
 model_settings <- read.csv("Outputs/model_settings.csv")
 Dmax <- 5.5
-Type <- "All"
+Type <- "A"
 
-ind <- which(model_settings$Dmax == Dmax & model_settings$Type == Type)
+data_plot <- list()
+pred_plot <- list()
 ```
 
 ```{r}
+# exponential decay model
+ind_exp <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                   grepl("Exponential", model_settings$mod))
 
-data_plot <- list()
+load(paste0("Rout/model_settings_job_", ind_exp, ".RData"))
+load(paste0("Rout/model_fits_job_", ind_exp, ".RData"))
+  
+data_plot[[1]] <- adastra_dat_analysis
+  
+preds <-  rstan::extract(out, pars = 'preds')
+data_plot[[1]]$preds <- apply(preds$preds, 2, median)
+data_plot[[1]]$mod <- model_settings$mod[ind_exp]
 
-for(i in 1:length(ind)){
-  load(paste0("Rout/model_settings_job_", ind[i], ".RData"))
-  load(paste0("Rout/model_fits_job_", ind[i], ".RData"))
-  
-  data_plot[[i]] <- adastra_dat_analysis
-  
-  preds <-  rstan::extract(out, pars = 'preds')
-  data_plot[[i]]$preds <- apply(preds$preds, 2, median)
-  data_plot[[i]]$mod <- model_settings$mod[i]
-  
+alpha_0 <-  rstan::extract(out, pars = 'alpha_0')$alpha_0
+beta_0 <-  rstan::extract(out, pars = 'beta_0')$beta_0
+
+t <- seq(0,14,0.1)
+preds_exp <- matrix(nrow = length(t), ncol = length(alpha_0))
+for(i in 1:ncol(preds_exp)){
+  preds_exp[,i] <- alpha_0[i] + beta_0[i] * t
 }
 
+
+pred_plot[[1]] <- data.frame(t = t,
+                             med = apply(preds_exp,1, median),
+                             low = apply(preds_exp,1, quantile, 0.025),
+                             up = apply(preds_exp,1, quantile, 0.975),
+                             mod = model_settings$mod[ind_exp])
+
+```
+
+```{r}
+# bi-exponential decay model
+ind_biexp <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                   grepl("Bi_exponential", model_settings$mod))
+
+load(paste0("Rout/model_settings_job_", ind_biexp, ".RData"))
+load(paste0("Rout/model_fits_job_", ind_biexp, ".RData"))
+  
+data_plot[[2]] <- adastra_dat_analysis
+  
+preds <-  rstan::extract(out, pars = 'preds')
+data_plot[[2]]$preds <- apply(preds$preds, 2, median)
+data_plot[[2]]$mod <- model_settings$mod[ind_biexp]
+
+
+coef <- rstan::extract(out, pars = 'coef')$coef
+intercept <- rstan::extract(out, pars = 'intercept')$intercept
+t <- seq(0,14,0.1)
+
+preds_biexp <- matrix(nrow = length(t), ncol = nrow(coef))
+for(i in 1:ncol(preds_biexp)){
+  preds_biexp[,i] <- log((exp(intercept[i,2] - coef[i,2]*t)) + (exp(intercept[i,1] - coef[i,1]*t)) )
+}
+
+
+pred_plot[[2]] <- data.frame(t = t,
+                             med = apply(preds_biexp,1, median),
+                             low = apply(preds_biexp,1, quantile, 0.025),
+                             up = apply(preds_biexp,1, quantile, 0.975),
+                             mod = model_settings$mod[ind_biexp])
+```
+
+```{r}
+# up-down model
+ind_updown <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                   grepl("Up_and_down", model_settings$mod))
+
+load(paste0("Rout/model_settings_job_", ind_updown, ".RData"))
+load(paste0("Rout/model_fits_job_", ind_updown, ".RData"))
+  
+data_plot[[3]] <- adastra_dat_analysis
+  
+preds <-  rstan::extract(out, pars = 'preds')
+data_plot[[3]]$preds <- apply(preds$preds, 2, median)
+data_plot[[3]]$mod <- model_settings$mod[ind_updown]
+
+
+
+alpha_0 <- rstan::extract(out, pars = 'alpha_0')$alpha_0
+tmax_pop <- rstan::extract(out, pars = 'tmax_pop')$tmax_pop
+beta_0 <- rstan::extract(out, pars = 'beta_0')$beta_0
+
+t <- seq(0,14,0.1)
+preds_updown <- matrix(nrow = length(t), ncol = nrow(beta_0))
+
+for(i in 1:ncol(preds_updown)){
+preds_updown[,i] <- alpha_0[i] + log((beta_0[i,1] + beta_0[i,2])/((beta_0[i,2] * exp(-1 * beta_0[i,1] * (t - tmax_pop[i]))) + (beta_0[i,1] * exp(beta_0[i,2] * (t - tmax_pop[i])))))
+}
+
+pred_plot[[3]] <- data.frame(t = t,
+                             med = apply(preds_updown,1, median),
+                             low = apply(preds_updown,1, quantile, 0.025),
+                             up = apply(preds_updown,1, quantile, 0.975),
+                             mod = model_settings$mod[ind_updown])
+```
+
+```{r}
+pred_Plot <- do.call("rbind", pred_plot)
+```
+
+```{r}
 data_Plot <- do.call("rbind", data_plot)
 data_Plot_median <- data_Plot %>% distinct(ID, Timepoint_ID, mod, .keep_all = T) %>%
-  group_by(Timepoint_ID, mod, fluType) %>%
-  summarise(med = median(preds))
+  group_by(Timepoint_ID, mod) %>%
+  summarise(med = median(preds),
+            med_vl = median(daily_VL))
+
+data_Plot2 <- data_Plot %>% distinct(ID, Timepoint_ID, .keep_all = T)
+```
+
+```{r}
+levels(data_Plot2$mod) <- c("Exponential decay", "Bi-exponential decay", "Up-and-down")
+levels(data_Plot_median$mod) <- c("Exponential decay", "Bi-exponential decay", "Up-and-down")
 
 
+title_lab <- ifelse(Type == "All", "Influenza A and B",
+                    ifelse(Type == "A", "Influenza A",
+                           "Influenza B"))
+
+G_pred <- ggplot() +
+  geom_point(data = data_Plot2, mapping = aes(x = Timepoint_ID, y = daily_VL, shape = censor),
+             alpha = 0.2, size = 2) +
+  geom_line(data = data_Plot2, mapping = aes(x = Timepoint_ID, y = daily_VL, group = ID),
+            alpha = 0.5, linewidth = 0.1) +
+  geom_point(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med_vl),
+             alpha = 0.75, size = 4, col = 'grey20', shape = 17) +
+  geom_line(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med_vl),
+            alpha = 0.75, linewidth = 1, col = 'grey20') +
+  geom_point(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med, col = mod), size = 3, alpha = 0.75) +
+  geom_line(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med, col = mod),  linewidth = 0.9, alpha = 0.75,
+            linetype = "dashed") +
+  geom_hline(yintercept = 0, col = 'red', linetype = "dashed") +
+  scale_shape_manual(values = c(6,1), guide = NULL) +
+  scale_color_manual(values = c("#0A5EB0", "#F72C5B","#F26B0F"), name = "Models") +
+  coord_cartesian(xlim=c(0, floor(Dmax)),
+                  ylim = c(0,8)) +  
+  theme_bw(base_size = 13) +
+  theme(axis.title  = element_text(face = "bold"),
+        plot.title = element_text(face = "bold"),
+        clip = "off") +
+  xlab("Time since randomisation (days)") +
+  ylab("Viral densities (log10 genomes/mL)") +
+  ggtitle(title_lab)
+G_pred
+```
+
+```{r}
+Plot_now = T
+
+if(Plot_now){
+plot_name <- paste0('Plots/prediction_', Type, "_", floor(Dmax), '.png')
+
+png(plot_name, width = 8, height = 5, units = 'in', res = 350)
+print(G_pred)
+dev.off()  
+}
+
+```
+
+```{r}
+adastra_dat_analysis %>%
+  distinct(ID, .keep_all = T) %>%
+  ungroup() %>%
+  summarise(median_age = median(Age),
+            q1_age = quantile(Age, 0.25),
+            q3_age = quantile(Age, 0.75),
+            median_onset = median(symptomDay),
+            q1_onset = quantile(symptomDay, 0.25),
+            q3_onset = quantile(symptomDay, 0.75)) %>%
+  t()
 ```
