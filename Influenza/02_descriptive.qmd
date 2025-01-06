@@ -1,0 +1,137 @@
+---
+title: "Characterizing influenza viral kinetics"
+author: "Phrutsamon Wongnak"
+format: html
+editor: visual
+---
+
+```{r}
+#library(conflicted)
+library(rstan)
+library(tidyverse)
+library(kableExtra)
+library(finalfit)
+library(RColorBrewer)
+library(lubridate)
+library(brms)
+library(ggplot2)
+library(ggpubr)
+library(scales)
+library(cowplot)
+library(grid)
+library(webshot2)
+library(webshot)
+library(magick)
+library(GGally)
+
+#conflicts_prefer(dplyr::filter)
+
+## information on software/hardware used
+version
+sessionInfo()
+
+rstan_options(auto_write = TRUE)
+## parameters for the analysis
+RUN_MODELS = F
+
+my_probs = c(0.025, 0.1, .5, .9, .975)
+source('functions.R')
+source('priors.R')
+```
+
+## *Load data*
+
+```{r}
+model_settings <- read.csv("Outputs/model_settings.csv")
+Dmax <- 5.5
+Type <- c("A", "B", "All")
+Mod <- "Exponential"
+
+ind <- which(model_settings$Dmax == Dmax & model_settings$Type %in% Type &
+             grepl(Mod, model_settings$mod))
+```
+
+```{r}
+#| echo: false
+
+summary_Params <- NULL
+posterior_Params <- list()
+
+for(i in 1:length(ind)){
+  load(paste0("Rout/model_settings_job_", ind[i], ".RData"))
+  load(paste0("Rout/model_fits_job_", ind[i], ".RData"))  
+  
+  sigmasq_u1 <- rstan::extract(out, pars = "sigmasq_u")[[1]][,1] 
+  sigmasq_u2 <- rstan::extract(out, pars = "sigmasq_u")[[1]][,2]
+  sigma_logvl <- rstan::extract(out, pars = "sigma_logvl")[[1]] 
+  alpha_0 <- rstan::extract(out, pars = "alpha_0")[[1]] 
+  beta_0 <- rstan::extract(out, pars = "beta_0")[[1]] 
+  
+  posterior_params <- cbind(sigmasq_u1, sigmasq_u2, sigma_logvl, alpha_0, beta_0)
+  
+  summary_params <- apply(posterior_params,2, quantile, my_probs) %>% t() %>% as.data.frame()
+  colnames(summary_params) <- c("P2.5", "P10", "P50", "P90", "P97.5")
+  summary_params$params <- row.names(summary_params)
+  summary_params$Type <- model_settings$Type[ind[i]]
+  summary_Params <- rbind(summary_Params, summary_params)
+  
+  posterior_params <- posterior_params %>% as.data.frame()
+  posterior_Params[[i]] <- posterior_params
+}
+
+row.names(summary_Params) <- NULL
+summary_Params
+```
+
+```{r}
+summary_Params$Type <- as.factor(summary_Params$Type)
+levels(summary_Params$Type) <- c("Influenza A", "Influenza B", "Both types")
+
+summary_Params$params <- as.factor(summary_Params$params)
+summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[u[1]]^{2}", "sigma[u[2]]^{2}", "sigma[logvl]")[as.numeric(summary_Params$params)]
+
+```
+
+```{r}
+G <- ggplot(summary_Params, aes(x = Type, y = P50, col = Type)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(x = Type, ymin = P2.5, ymax = P97.5),
+                width = 0.1, linewidth = 0.85) +
+  theme_bw(base_size = 10) +
+  facet_wrap(.~facet, scales = 'free', labeller = label_parsed) +
+  scale_color_manual(values = c("#EE4266", "#387ADF", "gray20"), guide = NULL) +
+  xlab("") +
+  ylab("Parameter estimates") +
+  theme(strip.text = element_text(size = 9),
+        panel.spacing = unit(1, "lines")) 
+G
+```
+
+```{r}
+Plot_now <- T
+if(Plot_now){
+  plot_name <- paste0('Plots/posterior_params_', floor(Dmax), '.png')
+  
+  png(plot_name, width = 8, height = 5, units = 'in', res = 350)
+  print(G)
+  dev.off()  
+}
+```
+
+```{r}
+# Correlation matrix of poterior distributions
+Plot_now = T
+
+if(Plot_now){
+  for(i in 1:length(ind)){
+    G_cor <- ggpairs(posterior_Params[[i]]) +
+      theme_bw()
+    plot_name <- paste0('Plots/Correlation_matrix_', Type[i], "_", floor(Dmax), '.png')
+  
+  png(plot_name, width = 10,height = 10, units = 'in', res = 350)
+  print(G_cor)
+  dev.off() 
+    
+  }
+}
+```

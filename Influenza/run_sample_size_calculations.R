@@ -10,7 +10,7 @@ source('sample_size_functions.R')
 source('priors.R')
 
 # use the linear model fits for simplicity
-load('Rout/model_fits_type_A_5d_job_1.RData')
+load('Rout/model_fits_job_1.RData')
 # get the individual slope estimates
 thetas = rstan::extract(out); rm(out)
 my_LOD = 1
@@ -41,8 +41,8 @@ sim_settings = expand.grid(N=Ns,
                            k_sigmasq_u_1 = k_sigmasq_u_1,
                            k_sigmasq_u_2 = k_sigmasq_u_2,
                            trt_effect_comp = trt_intervention,
-                           trt_control = c(Trt_effect_pos_control,
-                                           Trt_effect_neg_control))
+                           trt_control = c(Trt_effect_neg_control,
+                                           Trt_effect_pos_control))
 
 
 save(sim_settings, file = 'Rout/sim_settings.RData')
