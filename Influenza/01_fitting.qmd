@@ -272,3 +272,16 @@ save(out,
      file = file_name)
 }
 ```
+
+```{r}
+adastra_dat_analysis %>%
+  distinct(ID, .keep_all = T) %>%
+  ungroup() %>%
+  summarise(median_age = median(Age),
+            q1_age = quantile(Age, 0.25),
+            q3_age = quantile(Age, 0.75),
+            median_onset = median(symptomDay),
+            q1_onset = quantile(symptomDay, 0.25),
+            q3_onset = quantile(symptomDay, 0.75)) %>%
+  t()
+```

@@ -150,8 +150,8 @@ summary(mod)
 
 ```{r}
 model_settings <- read.csv("Outputs/model_settings.csv")
-Dmax <- 5.5
-Type <- "All"
+Dmax <- 14.5
+Type <- "B"
 
 data_plot <- list()
 pred_plot <- list()
@@ -307,7 +307,7 @@ G_pred
 ```
 
 ```{r}
-Plot_now = F
+Plot_now = T
 
 if(Plot_now){
 plot_name <- paste0('Plots/prediction_', Type, "_", floor(Dmax), '.png')
@@ -320,104 +320,14 @@ dev.off()
 ```
 
 ```{r}
-# Rediduals 
-
-levels(data_Plot$mod) <- c("Exponential decay", "Bi-exponential decay", "Up-and-down")
-
-data_Plot <- data_Plot %>%
-  group_by(ID, Timepoint_ID, mod) %>%
-  mutate(rediduals = log10_viral_load - preds) %>%
-  ungroup()
-
-resid_plot <- ggplot(data_Plot, aes(x = as.factor(Timepoint_ID), y = rediduals)) +
-  geom_jitter(width = 0.2, alpha = 0.4, size = 1.5, aes(shape = censor, fill = censor, col=censor)
-              ) +
-  geom_boxplot(outlier.shape = NA, fill = "white", alpha = 0.6) +
-  theme_bw(base_size = 14) +
-  facet_grid(.~ mod) +
-  geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
-  xlab("Time since randomisation (days)") +
-  ylab("Residuals") +
-  theme(
-     axis.title  = element_text(face = "bold"),
-    strip.text = element_text(face = "bold"),
-    legend.position = "bottom"
-  ) +
-  scale_shape_manual(values = c(25, 21), name = "Censor") +
-  scale_fill_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor") +
-  scale_color_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor")
-
-resid_plot
-```
-
-```{r}
-Plot_now = T
-
-if(Plot_now){
-  plot_name <- paste0('Plots/residuals_', Type, "_", floor(Dmax), '.png')
-  
-  png(plot_name, width = 8, height = 5, units = 'in', res = 350)
-  print(resid_plot)
-  dev.off()  
-}
-```
-
-```{r}
-#Individual plots
-data_Plot$censor <- as.factor(data_Plot$censor)
-
-IDs <-data_Plot %>% 
-  arrange(fluType, ID, Time) %>%
-  pull(ID) %>%
-  unique()
-
-ind_plot_list <- list()
-
-for(i in 1:length(IDs)){
-  data_Plot_i <- data_Plot %>% filter(ID == IDs[i])
-  data_Plot_median_i <- data_Plot_i %>% group_by(Timepoint_ID) %>%
-    mutate(med_vl = median(log10_viral_load)) %>%
-    ungroup() %>%
-    distinct(Timepoint_ID, .keep_all = T) %>%
-    select(Time, med_vl)
-  
-  lab <- paste0(data_Plot_i$ID[1], "\nInfluenza ", data_Plot_i$fluType[1])
-  
-  ind_plot_list[[i]] <- ggplot(data_Plot_i, aes(x = Time)) +
-    geom_point(aes(y = log10_viral_load, shape = censor), size = 1.75) +
-    geom_line(aes(y = preds, col = mod), linewidth = 1, alpha = 0.75) +
-    #geom_point(data = data_Plot_median_i, mapping = aes(x = Time, y = med_vl),
-    #           size=1.75, shape = 17, alpha = 0.75) +
-    #geom_line(data = data_Plot_median_i, mapping = aes(x = Time, y = med_vl),
-    #          linetype = "dashed", , alpha = 0.75) +
-    scale_color_manual(values = c("#69247C", "#DA498D","#F29F58"), name = "Models") +
-    theme_bw(base_size = 10)   +  
-    scale_y_continuous(labels=label_math(), breaks = seq(0,8,2)) +
-    coord_cartesian(ylim = c(0,8), xlim = c(0,5)) +
-    scale_shape_manual(values = c(25, 21), guide = "none", drop=FALSE) +
-    geom_hline(yintercept = 0, col = 'red', linetype = "dashed") +
-    ylab("") +
-    xlab("")  +
-    ggtitle(lab) +
-    theme(plot.title = element_text(face = "bold",hjust = 0.5, size = 8))
-  
-}
-
-ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4, common.legend = T, legend = "right")
-```
-
-```{r}
-plot_now = F
-
-if(plot_now){
-for(i in 1:length(ind_plot_all)){
-  png(paste0("Plots/Individual_plots/Ind_plot_", i, ".png"), width = 12, height = 8, units = "in", res = 350)
-  print(annotate_figure( ind_plot_all[[i]], bottom = textGrob("Time since randomisation (days)", vjust = 0.5, gp = gpar(cex = 1.2, fontface="bold")),
-                         left = textGrob("Viral densities (genomes/mL)", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))))
-  dev.off()
-}  
-}
-
-
-
+adastra_dat_analysis %>%
+  distinct(ID, .keep_all = T) %>%
+  ungroup() %>%
+  summarise(median_age = median(Age),
+            q1_age = quantile(Age, 0.25),
+            q3_age = quantile(Age, 0.75),
+            median_onset = median(symptomDay),
+            q1_onset = quantile(symptomDay, 0.25),
+            q3_onset = quantile(symptomDay, 0.75)) %>%
+  t()
 ```
