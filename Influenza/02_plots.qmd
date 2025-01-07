@@ -351,7 +351,7 @@ resid_plot
 ```
 
 ```{r}
-Plot_now = T
+Plot_now = F
 
 if(Plot_now){
   plot_name <- paste0('Plots/residuals_', Type, "_", floor(Dmax), '.png')
