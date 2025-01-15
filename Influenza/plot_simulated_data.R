@@ -1,12 +1,12 @@
 load("Rout/sim_settings.RData")
-load('Rout/model_fits1.RData')
+load('Rout/model_fits_job_1.RData')
 ####################################################################################
 library(stringr)
 library(ggplot2)
 source('sample_size_functions.R')
-source('../priors.R')
+#source('../priors.R')
 ####################################################################################
-job_i <- 5953
+job_i <- 1
 
 ### set up simulation for the settings job_i
 print(sim_settings[job_i, ])
