@@ -105,13 +105,18 @@ generated quantities {
   real preds[Ntot]; // For plotting
   vector[n_id] slope_1;
   vector[n_id] slope_2;
+  vector[Ntot] log_lik;
+
 
   
   for(i in 1:N_obs){
     preds[i] = pred_log10_vl[i];
+    log_lik[i] = student_t_lpdf(log_10_vl[i] | t_dof, pred_log10_vl[i], sigma_logvl);
+
   }
   for(i in (N_obs+1):Ntot){
     preds[i] = pred_log10_vl[i];
+    log_lik[i] = student_t_lcdf(log10_cens_vl[i] | t_dof, pred_log10_vl[i], sigma_logvl);
   }
   
   for(i in 1:n_id){
