@@ -64,15 +64,16 @@ G1 <- ggplot(diff_sigmasq_u2, aes(x = N, y = med, col = k_sigmasq_u_2)) +
   geom_point(position = position_dodge(width = 0.5), size = 2.5, alpha = 0.75) +
   geom_errorbar(aes(ymin = low_IQR, ymax = up_IQR), width = 0, linewidth = 0.6,
                 position = position_dodge(width = 0.5)) +
-  facet_wrap(.~trt_effect_comp_lab, nrow = 2) +
+  facet_wrap(.~trt_effect_comp_lab, nrow = 1) +
   ylim(-0.4,0.4) +
-  theme_bw(base_size = 13) +
+  theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red', linetype = 'dashed',
              linewidth = 0.75) +
-  xlab("Number of patients per arm") +
-  ylab("Estimation error") +
-  ggtitle(expression("Varied inter-individual variation on the slope (" * sigma[theta[2]]^2 * ")")) +
-  scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "")
+  xlab("") +
+  ylab("") +
+  ggtitle(expression("C) Varied inter-individual variation on the slope (" * sigma[theta[2]]^2 * ")")) +
+  scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
+  theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
 png("Plots/estimation_error_sigmasq_u2.png", width = 8, height = 6, unit = "in", res = 350)
 G1
@@ -113,15 +114,16 @@ G2 <- ggplot(diff_sigmasq_u1, aes(x = N, y = med, col = k_sigmasq_u_1)) +
   geom_point(position = position_dodge(width = 0.5), size = 2.5, alpha = 0.75) +
   geom_errorbar(aes(ymin = low_IQR, ymax = up_IQR), width = 0, linewidth = 0.6,
                 position = position_dodge(width = 0.5)) +
-  facet_wrap(.~trt_effect_comp_lab, nrow = 2) +
+  facet_wrap(.~trt_effect_comp_lab, nrow = 1) +
   ylim(-0.4,0.4) +
-  theme_bw(base_size = 13) +
+  theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red', linetype = 'dashed',
              linewidth = 0.75) +
-  xlab("Number of patients per arm") +
-  ylab("Estimation error") +
-  ggtitle(expression("Varied inter-individual variation on the intercept (" * sigma[theta[1]]^2 * ")")) +
-  scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "")
+  xlab("") +
+  ylab("") +
+  ggtitle(expression("B) Varied inter-individual variation on the intercept (" * sigma[theta[1]]^2 * ")")) +
+  scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
+  theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
 G2
 
@@ -195,15 +197,16 @@ G3 <- ggplot(diff_sigma_logvl, aes(x = N, y = med, col = k_sigma_logvl)) +
   geom_point(position = position_dodge(width = 0.5), size = 2.5, alpha = 0.75) +
   geom_errorbar(aes(ymin = low_IQR, ymax = up_IQR), width = 0, linewidth = 0.6,
                 position = position_dodge(width = 0.5)) +
-  facet_wrap(.~trt_effect_comp_lab, nrow = 2) +
+  facet_wrap(.~trt_effect_comp_lab, nrow = 1) +
   ylim(-0.4,0.4) +
-  theme_bw(base_size = 13) +
+  theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red', linetype = 'dashed',
              linewidth = 0.75) +
-  xlab("Number of patients per arm") +
-  ylab("Estimation error") +
-  ggtitle(expression("Varied observation error (" * sigma[logvl] * ")")) +
-  scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "")
+  xlab("") +
+  ylab("") +
+  ggtitle(expression("A) Varied observation error (" * sigma[logvl] * ")")) +
+  scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
+  theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
 G3
 
@@ -211,3 +214,21 @@ G3
 png("Plots/estimation_error_sigma_logvl.png", width = 8, height = 6, unit = "in", res = 350)
 G3
 dev.off()  
+
+
+
+
+library(ggpubr)
+library(grid)
+
+plot_combined <- ggarrange(G3, G2, G1, nrow = 3, align = "v",
+                           common.legend = T, legend = "right")
+
+
+png("Plots/estimation_error.png", width = 11, height = 8, unit = "in", res = 350)
+print(annotate_figure(plot_combined, bottom = textGrob("Number of patients per arm", vjust = 0.5, gp = gpar(cex = 1.2, fontface="bold")),
+                      left = textGrob("Estimation error", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))))
+
+dev.off()  
+
+?ggarrange
