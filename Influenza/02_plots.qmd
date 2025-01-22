@@ -270,15 +270,18 @@ data_Plot2 <- data_Plot %>% distinct(ID, Timepoint_ID, .keep_all = T)
 ```
 
 ```{r}
-levels(data_Plot2$mod) <- c("Exponential decay", "Bi-exponential decay", "Up-and-down")
-levels(data_Plot_median$mod) <- c("Exponential decay", "Bi-exponential decay", "Up-and-down")
-
+levels(data_Plot2$mod) <- c("Exponential decay", "Bi-exponential decay", "Growth-and-decay")
+levels(data_Plot_median$mod) <- c("Exponential decay", "Bi-exponential decay", "Growth-and-decay")
+levels(pred_Plot$mod) <- c("Exponential decay", "Bi-exponential decay", "Growth-and-decay")
 
 title_lab <- ifelse(Type == "All", "Influenza A and B",
                     ifelse(Type == "A", "Influenza A",
                            "Influenza B"))
 
+pred_Plot <- pred_Plot %>% filter(t <= floor(Dmax))
+
 G_pred <- ggplot() +
+    geom_line(data = pred_Plot, mapping = aes(x = t, y = med, col = mod),  linewidth = 2, alpha = 0.75) +
   geom_point(data = data_Plot2, mapping = aes(x = Timepoint_ID, y = daily_VL, shape = censor),
              alpha = 0.2, size = 2) +
   geom_line(data = data_Plot2, mapping = aes(x = Timepoint_ID, y = daily_VL, group = ID),
@@ -287,9 +290,7 @@ G_pred <- ggplot() +
              alpha = 0.75, size = 4, col = 'grey20', shape = 17) +
   geom_line(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med_vl),
             alpha = 0.75, linewidth = 1, col = 'grey20') +
-  geom_point(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med, col = mod), size = 3, alpha = 0.75) +
-  geom_line(data = data_Plot_median, mapping = aes(x = Timepoint_ID, y = med, col = mod),  linewidth = 0.9, alpha = 0.75,
-            linetype = "dashed") +
+#  geom_point(data = pred_Plot, mapping = aes(x = t, y = med, col = mod), size = 3, alpha = 0.75) +
   geom_hline(yintercept = 0, col = 'red', linetype = "dashed") +
   scale_shape_manual(values = c(6,1), guide = NULL) +
   scale_color_manual(values = c("#0A5EB0", "#F72C5B","#F26B0F"), name = "Models") +
@@ -298,11 +299,10 @@ G_pred <- ggplot() +
   scale_x_continuous(breaks = seq(0,floor(Dmax),1)) +
   theme_bw(base_size = 13) +
   theme(axis.title  = element_text(face = "bold"),
-        plot.title = element_text(face = "bold"),
         clip = "off") +
   xlab("Time since randomisation (days)") +
-  ylab("Viral densities (log10 genomes/mL)") +
-  ggtitle(title_lab)
+  ylab("Viral densities \n(log10 genomes/mL)") +
+  ggtitle("A) Predicted clearance kinetics")
 G_pred
 ```
 
@@ -322,7 +322,7 @@ dev.off()
 ```{r}
 # Rediduals 
 
-levels(data_Plot$mod) <- c("Exponential decay", "Bi-exponential decay", "Up-and-down")
+levels(data_Plot$mod) <- c("Exponential decay", "Bi-exponential decay", "Growth-and-decay")
 
 data_Plot <- data_Plot %>%
   group_by(ID, Timepoint_ID, mod) %>%
@@ -333,7 +333,7 @@ resid_plot <- ggplot(data_Plot, aes(x = as.factor(Timepoint_ID), y = rediduals))
   geom_jitter(width = 0.2, alpha = 0.4, size = 1.5, aes(shape = censor, fill = censor, col=censor)
               ) +
   geom_boxplot(outlier.shape = NA, fill = "white", alpha = 0.6) +
-  theme_bw(base_size = 14) +
+  theme_bw(base_size = 13) +
   facet_grid(.~ mod) +
   geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
   xlab("Time since randomisation (days)") +
@@ -341,11 +341,12 @@ resid_plot <- ggplot(data_Plot, aes(x = as.factor(Timepoint_ID), y = rediduals))
   theme(
      axis.title  = element_text(face = "bold"),
     strip.text = element_text(face = "bold"),
-    legend.position = "bottom"
+    legend.position = "right"
   ) +
   scale_shape_manual(values = c(25, 21), name = "Censor") +
   scale_fill_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor") +
-  scale_color_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor")
+  scale_color_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor") +
+  ggtitle("B) Residuals")
 
 resid_plot
 ```
@@ -360,6 +361,21 @@ if(Plot_now){
   print(resid_plot)
   dev.off()  
 }
+```
+
+```{r}
+library(ggpubr)
+
+Plot_now = T
+
+if(Plot_now){
+  plot_name <- paste0('Plots/prediction_residuals_', Type, "_", floor(Dmax), '.png')
+  
+  png(plot_name, width = 8, height = 8, units = 'in', res = 350)
+  print(ggarrange(G_pred, resid_plot, ncol = 1))
+  dev.off()  
+}
+
 ```
 
 ```{r}

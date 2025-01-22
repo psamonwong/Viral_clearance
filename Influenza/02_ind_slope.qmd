@@ -69,31 +69,85 @@ ind <- which(model_settings$Dmax == Dmax & model_settings$Type %in% Type &
 ```
 
 ```{r}
+model_settings <- read.csv("Outputs/model_settings.csv")
+Dmax <- 5.5
+Type <- c("A", "B", "All")
+Mod <- "Exponential"
+
+ind <- which(model_settings$Dmax == Dmax & model_settings$Type %in% Type &
+             grepl(Mod, model_settings$mod))
+
+summary_Params <- NULL
+posterior_Params <- list()
+
+for(i in 1:length(ind)){
+  load(paste0("Rout/model_settings_job_", ind[i], ".RData"))
+  load(paste0("Rout/model_fits_job_", ind[i], ".RData"))  
+  
+  thetas <- rstan::extract(out)
+  
+  sigmasq_u1 <- thetas$sigmasq_u[,1] 
+  sigmasq_u2 <- thetas$sigmasq_u[,2]
+  sigma_logvl <- thetas$sigma_logvl
+  alpha_0 <- thetas$alpha_0
+  beta_0 <- -1*thetas$beta_0
+  
+  sigmasq_theta1 <- NULL
+  sigmasq_theta2 <- NULL
+  
+  for(j in 1:length(sigmasq_u1)){
+      L = diag(x = unlist(thetas$sigmasq_u[j,]),nrow = 2,ncol = 2)%*%thetas$L_Omega[j,,]
+      Epsilon = L%*%t(L)
+      
+      sigmasq_theta1[j] <- Epsilon[1,1]
+      sigmasq_theta2[j] <- Epsilon[2,2]
+  }
+  
+  
+  posterior_params <- cbind(sigmasq_u1, sigmasq_u2, sigma_logvl, alpha_0, beta_0, sigmasq_theta1, sigmasq_theta2)
+  
+  summary_params <- apply(posterior_params,2, quantile, my_probs) %>% t() %>% as.data.frame()
+  colnames(summary_params) <- c("P2.5", "P10", "P50", "P90", "P97.5")
+  summary_params$params <- row.names(summary_params)
+  summary_params$Type <- model_settings$Type[ind[i]]
+  summary_Params <- rbind(summary_Params, summary_params)
+  
+  posterior_params <- posterior_params %>% as.data.frame()
+  posterior_Params[[i]] <- posterior_params
+}
+
+row.names(summary_Params) <- NULL
+summary_Params
+```
+
+```{r}
 summary_Params$Type <- as.factor(summary_Params$Type)
-levels(summary_Params$Type) <- c("Influenza A", "Influenza B", "Both types")
+levels(summary_Params$Type) <- c("Type A", "Type B", "Both types")
 
 summary_Params$params <- as.factor(summary_Params$params)
-summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[u[1]]^{2}", "sigma[u[2]]^{2}", "sigma[logvl]")[as.numeric(summary_Params$params)]
+summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[logvl]", "sigma[theta[1]]^{2}", "sigma[theta[2]]^{2}", "sigma[u[1]]^{2}", "sigma[u[2]]^{2}")[as.numeric(summary_Params$params)]
 
 ```
 
 ```{r}
-G <- ggplot(summary_Params, aes(x = Type, y = P50, col = Type)) +
+G <- ggplot(summary_Params %>% filter(!params %in% c('sigmasq_u1', 'sigmasq_u2'))
+            , aes(x = Type, y = P50, col = Type)) +
   geom_point(size = 3) +
   geom_errorbar(aes(x = Type, ymin = P2.5, ymax = P97.5),
                 width = 0.1, linewidth = 0.85) +
-  theme_bw(base_size = 10) +
-  facet_wrap(.~facet, scales = 'free', labeller = label_parsed) +
+  theme_bw(base_size = 11) +
+  facet_wrap(.~facet, scales = 'free', labeller = label_parsed, ncol = 3) +
   scale_color_manual(values = c("#EE4266", "#387ADF", "gray20"), guide = NULL) +
   xlab("") +
   ylab("Parameter estimates") +
+  ggtitle("A) Clearance kinetics parameters")
   theme(strip.text = element_text(size = 9),
         panel.spacing = unit(1, "lines")) 
 G
 ```
 
 ```{r}
-Plot_now <- T
+Plot_now <- F
 if(Plot_now){
   plot_name <- paste0('Plots/posterior_params_', floor(Dmax), '.png')
   
@@ -105,7 +159,7 @@ if(Plot_now){
 
 ```{r}
 # Correlation matrix of poterior distributions
-Plot_now = T
+Plot_now = F
 
 if(Plot_now){
   for(i in 1:length(ind)){
@@ -153,9 +207,10 @@ G_hl <- ggplot(summary_hl, aes(x = P50, y = ID, col = fluType)) +
   geom_point(size = 2, alpha = 0.75) +
   geom_errorbar(aes(xmin = P2.5, xmax = P97.5), width = 0,
                 linewidth = 0.5, alpha = 0.75) +
-  theme_bw(base_size = 12) +
+  theme_bw(base_size = 11) +
   xlab("Viral clearance half-life (h)") +
   ylab("Individual patient") +
+  ggtitle("B) Individual viral clearance half-lives") +
   geom_vline(xintercept = 0, col = "red", linetype = "dashed") +
   scale_color_manual(values = c("#EE4266", "#387ADF"), name = "Influenza type") +
   theme(axis.text.y = element_blank()) +
@@ -172,7 +227,7 @@ G_hl
 ```
 
 ```{r}
-Plot_now <- T
+Plot_now <- F
 if(Plot_now){
   plot_name <- paste0('Plots/posterior_hl_', floor(Dmax), '.png')
   
@@ -180,4 +235,30 @@ if(Plot_now){
   print(G_hl)
   dev.off()  
 }
+```
+
+```{r}
+library(ggpubr)
+
+Plot_now <- T
+if(Plot_now){
+  plot_name <- paste0('Plots/posterior_hl_', floor(Dmax), '.png')
+  
+  png(plot_name, width = 8, height = 8, units = 'in', res = 350)
+  print(ggarrange(G, G_hl, ncol = 1), align = "hv")
+  dev.off()  
+}
+```
+
+```{r}
+summary_Params <- summary_Params %>%
+  mutate(lab = paste0(
+    round(P50,1),
+    " [95% CrI: ",
+    round(P2.5,1),
+    " to ",
+    round(P97.5,1),
+    "]"
+  ))
+summary_Params
 ```
