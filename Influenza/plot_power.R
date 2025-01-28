@@ -229,7 +229,7 @@ G3 <- ggplot(res_logvl, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("D) Varied observation error (" * sigma[logvl] * ")")) +
+  ggtitle(expression("D) Varied observation error (" * sigma[VL]^2 * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red") +
   theme(plot.margin = unit(c(0,0.2,0,0), 'lines'))
 G3

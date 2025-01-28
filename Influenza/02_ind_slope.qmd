@@ -125,7 +125,7 @@ summary_Params$Type <- as.factor(summary_Params$Type)
 levels(summary_Params$Type) <- c("Type A", "Type B", "Both types")
 
 summary_Params$params <- as.factor(summary_Params$params)
-summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[logvl]", "sigma[theta[1]]^{2}", "sigma[theta[2]]^{2}", "sigma[u[1]]^{2}", "sigma[u[2]]^{2}")[as.numeric(summary_Params$params)]
+summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[VL]^{2}", "sigma[theta[1]]^{2}", "sigma[theta[2]]^{2}", "sigma[u[1]]^{2}", "sigma[u[2]]^{2}")[as.numeric(summary_Params$params)]
 
 ```
 
