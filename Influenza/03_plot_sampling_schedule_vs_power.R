@@ -43,7 +43,7 @@ res_days$trt_effect_comp <- factor(res_days$trt_effect_comp,
 res_days$lab <- NA
 res_days$lab[res_days$day_plans == "0,1,2,3,4,5"] <- "Everyday \n(n=6)"
 res_days$lab[res_days$day_plans == "0,2,5"] <- "Everyday other day \n(n=3)"
-res_days$lab[res_days$day_plans == "0,5"] <- "Fist and last day \n(n=2)"
+res_days$lab[res_days$day_plans == "0,5"] <- "First and last day \n(n=2)"
 
 
 #res_sigmasq_u2$k_sigmasq_u_2 <- as.factor(res_sigmasq_u2$k_sigmasq_u_2)
