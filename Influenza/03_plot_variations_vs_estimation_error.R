@@ -29,7 +29,7 @@ res_all <- rbind(res_1, res_2)
 ###################################################################################################
 # Interindividual variation on slope (sigmasq_u2)
 res_sigmasq_u2 <- res_all %>% filter(k_sigmasq_u_1 == 1) %>%
-  mutate(trt_effect_comp_lab = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%"))) %>%
+  mutate(trt_effect_comp_lab = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%"))) %>%
   group_by(N, k_sigmasq_u_2, trt_effect_comp) %>%
   arrange(Median) %>%
   mutate(n_per_group = n(),
@@ -39,7 +39,7 @@ res_sigmasq_u2 <- res_all %>% filter(k_sigmasq_u_1 == 1) %>%
   ungroup()
 
 res_sigmasq_u2$trt_effect_comp_lab <- factor(res_sigmasq_u2$trt_effect_comp_lab,
-                                             levels = (paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                             levels = (paste0("Effect size = ", seq(20,100,20), "%")))
 
 res_sigmasq_u2$k_sigmasq_u_2 <- as.factor(res_sigmasq_u2$k_sigmasq_u_2)
 res_sigmasq_u2$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_sigmasq_u2$k_sigmasq_u_2)]
@@ -71,7 +71,7 @@ G1 <- ggplot(diff_sigmasq_u2, aes(x = N, y = med, col = k_sigmasq_u_2)) +
              linewidth = 0.75) +
   xlab("") +
   ylab("") +
-  ggtitle(expression("C) Varied inter-individual variation on the slope (" * sigma[theta[2]]^2 * ")")) +
+  ggtitle(expression("C) Varied inter-individual variation on the slope (" * sigma[theta[2]] * ")")) +
   scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
   theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
@@ -82,7 +82,7 @@ dev.off()
 ###################################################################################################
 # Interindividual variation on intercept (sigmasq_u1)
 res_sigmasq_u1 <- res_all %>% filter(k_sigmasq_u_2 == 1) %>%
-  mutate(trt_effect_comp_lab = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%"))) %>%
+  mutate(trt_effect_comp_lab = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%"))) %>%
   group_by(N, k_sigmasq_u_1, trt_effect_comp) %>%
   arrange(Median) %>%
   mutate(n_per_group = n(),
@@ -92,7 +92,7 @@ res_sigmasq_u1 <- res_all %>% filter(k_sigmasq_u_2 == 1) %>%
   ungroup()
 
 res_sigmasq_u1$trt_effect_comp_lab <- factor(res_sigmasq_u1$trt_effect_comp_lab,
-                                             levels = (paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                             levels = (paste0("Effect size = ", seq(20,100,20), "%")))
 
 res_sigmasq_u1$k_sigmasq_u_1 <- as.factor(res_sigmasq_u1$k_sigmasq_u_1)
 res_sigmasq_u1$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_sigmasq_u1$k_sigmasq_u_1)]
@@ -121,7 +121,7 @@ G2 <- ggplot(diff_sigmasq_u1, aes(x = N, y = med, col = k_sigmasq_u_1)) +
              linewidth = 0.75) +
   xlab("") +
   ylab("") +
-  ggtitle(expression("B) Varied inter-individual variation on the intercept (" * sigma[theta[1]]^2 * ")")) +
+  ggtitle(expression("B) Varied inter-individual variation on the intercept (" * sigma[theta[1]] * ")")) +
   scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
   theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
@@ -164,7 +164,7 @@ res_all <- rbind(res_1, res_2)
 
 
 res_logvl <- res_all %>% filter(trt_control == 1) %>%
-  mutate(trt_effect_comp_lab = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%"))) %>%
+  mutate(trt_effect_comp_lab = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%"))) %>%
   group_by(N, k_sigma_logvl, trt_effect_comp) %>%
   arrange(Median) %>%
   mutate(n_per_group = n(),
@@ -174,7 +174,7 @@ res_logvl <- res_all %>% filter(trt_control == 1) %>%
   ungroup()
 
 res_logvl$trt_effect_comp_lab <- factor(res_logvl$trt_effect_comp_lab,
-                                             levels = (paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                             levels = (paste0("Effect size = ", seq(20,100,20), "%")))
 
 res_logvl$k_sigma_logvl <- as.factor(res_logvl$k_sigma_logvl)
 res_logvl$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_logvl$k_sigma_logvl)]
@@ -204,7 +204,7 @@ G3 <- ggplot(diff_sigma_logvl, aes(x = N, y = med, col = k_sigma_logvl)) +
              linewidth = 0.75) +
   xlab("") +
   ylab("") +
-  ggtitle(expression("A) Varied observation error (" * sigma[VL]^2 * ")")) +
+  ggtitle(expression("A) Varied observation error (" * sigma[VL] * ")")) +
   scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
   theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
@@ -230,5 +230,3 @@ print(annotate_figure(plot_combined, bottom = textGrob("Number of patients per a
                       left = textGrob("Estimation error", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))))
 
 dev.off()  
-
-?ggarrange
