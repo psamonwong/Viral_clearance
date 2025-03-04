@@ -35,10 +35,10 @@ res_days <- res_all %>%
   summarise(total = n(),
             n = sum(sig),
             power = n/total) %>%
-  mutate(trt_effect_comp = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%")))
+  mutate(trt_effect_comp = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%")))
 
 res_days$trt_effect_comp <- factor(res_days$trt_effect_comp,
-                                          levels = rev(paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                          levels = rev(paste0("Effect size = ", seq(20,100,20), "%")))
 
 res_days$lab <- NA
 res_days$lab[res_days$day_plans == "0,1,2,3,4,5"] <- "Everyday \n(n=6)"
@@ -77,11 +77,11 @@ res_swabs <- res_all %>%
   summarise(total = n(),
             n = sum(sig),
             power = n/total) %>%
-  mutate(trt_effect_comp = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%")),
+  mutate(trt_effect_comp = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%")),
          lab = if_else(N_swabs_per_day == 1, paste0(N_swabs_per_day, " swab/day"), paste0(N_swabs_per_day, " swabs/day")))
 
 res_swabs$trt_effect_comp <- factor(res_swabs$trt_effect_comp,
-                                   levels = rev(paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                   levels = rev(paste0("Effect size = ", seq(20,100,20), "%")))
 
 #res_days$lab[res_days$day_plans == "0,1,2,3,4,5"] <- "Everyday \n(n=6)"
 #res_days$lab[res_days$day_plans == "0,2,5"] <- "Everyday other day \n(n=3)"
@@ -158,10 +158,10 @@ res_sampling_fq <- res_all %>%
   summarise(total = n(),
             n = sum(sig),
             power = n/total) %>%
-  mutate(trt_effect_comp = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%")))
+  mutate(trt_effect_comp = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%")))
 
 res_sampling_fq$trt_effect_comp <- factor(res_sampling_fq$trt_effect_comp,
-                                         levels = rev(paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                         levels = rev(paste0("Effect size = ", seq(20,100,20), "%")))
 
 #res_sigmasq_u1$k_sigmasq_u_1 <- as.factor(res_sigmasq_u1$k_sigmasq_u_1)
 #res_sigmasq_u1$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_sigmasq_u1$k_sigmasq_u_1)]
@@ -189,7 +189,7 @@ G2
 
 res_N_swabs_etimation_error <- res_all %>% 
   filter(day_plans == c("0,1,2,3,4,5")) %>%
-  mutate(trt_effect_comp_lab = as.factor(paste0("Treatment effect = ", (trt_effect_comp-1)*100, "%"))) %>%
+  mutate(trt_effect_comp_lab = as.factor(paste0("Effect size = ", (trt_effect_comp-1)*100, "%"))) %>%
   group_by(N, N_swabs_per_day, trt_effect_comp) %>%
   arrange(Median) %>%
   mutate(n_per_group = n(),
@@ -199,7 +199,7 @@ res_N_swabs_etimation_error <- res_all %>%
   ungroup()
 
 res_N_swabs_etimation_error$trt_effect_comp_lab <- factor(res_N_swabs_etimation_error$trt_effect_comp_lab,
-                                                        levels = (paste0("Treatment effect = ", seq(20,100,20), "%")))
+                                                        levels = (paste0("Effect size = ", seq(20,100,20), "%")))
 
 #res_sigmasq_u2$k_sigmasq_u_2 <- as.factor(res_sigmasq_u2$k_sigmasq_u_2)
 #res_sigmasq_u2$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_sigmasq_u2$k_sigmasq_u_2)]
