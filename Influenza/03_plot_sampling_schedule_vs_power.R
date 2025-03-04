@@ -54,7 +54,7 @@ G1 <- ggplot(res_days, aes(x = N, y = power, col = trt_effect_comp)) +
   facet_wrap(.~lab) +
   geom_line(linewidth = 0.5, linetype = "dashed") +
   theme_bw(base_size = 13) +
-  ylab("") +
+  ylab("Power") +
   xlab("") +
   scale_x_continuous(breaks = seq(40,240,40)) +
   scale_y_continuous(breaks = seq(0,1,0.2), limits = c(0,1)) +
@@ -96,7 +96,7 @@ G2 <- ggplot(res_swabs, aes(x = N, y = power, col = trt_effect_comp)) +
   facet_wrap(.~lab) +
   geom_line(linewidth = 0.5, linetype = "dashed") +
   theme_bw(base_size = 13) +
-  ylab("") +
+  ylab("Power") +
   xlab("") +
   scale_x_continuous(breaks = seq(40,240,40)) +
   scale_y_continuous(breaks = seq(0,1,0.2), limits = c(0,1)) +
