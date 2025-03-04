@@ -1034,7 +1034,7 @@ make_mITT <- function(adastra_dat, use_threshold, mITT_threshold, Type){
   adastra_dat = adastra_dat %>% group_by(ID) %>%
     mutate(
       baseline_vl = mean(log10_viral_load[which(Timepoint_ID==0)]),
-      mITT = ifelse(use_threshold, baseline_vl > log10(mITT_threshold), T) & all_pcr_early) %>%
+      mITT = ifelse(use_threshold, baseline_vl > log10(mITT_threshold), T)) %>%
     filter(fluType %in% Type)
   
   return(adastra_dat)

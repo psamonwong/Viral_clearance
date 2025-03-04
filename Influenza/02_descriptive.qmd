@@ -43,11 +43,11 @@ source('priors.R')
 
 ```{r}
 model_settings <- read.csv("Outputs/model_settings.csv")
-Dmax <- 5.5
+Dmax <- c(5.5,7.5)
 Type <- c("A", "B", "All")
 Mod <- "Exponential"
 
-ind <- which(model_settings$Dmax == Dmax & model_settings$Type %in% Type &
+ind <- which(model_settings$Dmax %in% Dmax & model_settings$Type %in% Type &
              grepl(Mod, model_settings$mod))
 ```
 
@@ -73,6 +73,7 @@ for(i in 1:length(ind)){
   colnames(summary_params) <- c("P2.5", "P10", "P50", "P90", "P97.5")
   summary_params$params <- row.names(summary_params)
   summary_params$Type <- model_settings$Type[ind[i]]
+  summary_params$Dmax <- model_settings$Dmax[ind[i]]
   summary_Params <- rbind(summary_Params, summary_params)
   
   posterior_params <- posterior_params %>% as.data.frame()
@@ -88,29 +89,36 @@ summary_Params$Type <- as.factor(summary_Params$Type)
 levels(summary_Params$Type) <- c("Influenza A", "Influenza B", "Both types")
 
 summary_Params$params <- as.factor(summary_Params$params)
-summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[u[1]]^{2}", "sigma[u[2]]^{2}", "sigma[logvl]")[as.numeric(summary_Params$params)]
+summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[theta[1]]", "sigma[theta[2]]", "sigma[VL]")[as.numeric(summary_Params$params)]
+
+summary_Params$gr <- as.factor( paste0(floor(summary_Params$Dmax), " days" ))
 
 ```
 
 ```{r}
-G <- ggplot(summary_Params, aes(x = Type, y = P50, col = Type)) +
-  geom_point(size = 3) +
+G <- ggplot(summary_Params, aes(x = Type, y = P50, col = Type, group = gr,
+                                shape = gr)) +
+  geom_point(size = 2.5, position = position_dodge(width = 0.6)) +
   geom_errorbar(aes(x = Type, ymin = P2.5, ymax = P97.5),
-                width = 0.1, linewidth = 0.85) +
-  theme_bw(base_size = 10) +
+                width = 0.3, linewidth = 0.6,
+                position = position_dodge(width = 0.6)) +
+  theme_bw(base_size = 9) +
   facet_wrap(.~facet, scales = 'free', labeller = label_parsed) +
   scale_color_manual(values = c("#EE4266", "#387ADF", "gray20"), guide = NULL) +
+  scale_shape_manual(values = c(20, 18), name = "Follow-up duration") +
   xlab("") +
   ylab("Parameter estimates") +
-  theme(strip.text = element_text(size = 9),
+  theme(strip.text = element_text(size = 10),
         panel.spacing = unit(1, "lines")) 
 G
 ```
 
 ```{r}
 Plot_now <- T
+ifelse(length(Dmax) > 1, lab <- "all", lab<-Dmax)
+
 if(Plot_now){
-  plot_name <- paste0('Plots/posterior_params_', floor(Dmax), '.png')
+  plot_name <- paste0('Plots/posterior_params_', lab, '.png')
   
   png(plot_name, width = 8, height = 5, units = 'in', res = 350)
   print(G)

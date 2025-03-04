@@ -44,7 +44,7 @@ source('priors.R')
 
 ```{r}
 model_settings <- read.csv("Outputs/model_settings.csv")
-Dmax <- 5.5
+Dmax <- 14.5
 Type <- "All"
 
 ind <- which(model_settings$Dmax == Dmax & model_settings$Type == Type)[1]
@@ -57,7 +57,7 @@ load(paste0("Rout/model_fits_job_", ind, ".RData"))
 ```
 
 ```{r}
-Plot_now = F
+Plot_now = T
 
 if(Plot_now){
 plot_name <- paste0('Plots/viral_dynamics_type_', Type,'.png')
@@ -72,18 +72,30 @@ dev.off()
 
 ```{r}
 adastra_dat_analysis %>%
-  group_by(fluType, Timepoint_ID) %>%
-  summarise(censored = sum(censor == "left"), .groups = "keep",
-            n = n(),
-            percentage = round(censored*100/n))
+  group_by(Timepoint_ID, ID, fluType) %>%
+  summarise(censored = any(censor == "left"), .groups = "keep") %>%
+  ungroup() %>%
+  group_by(Timepoint_ID) %>%
+  summarise(n = n(),
+            n_censored = sum(censored),
+            percentage = round(n_censored*100/n)) %>%
+  ungroup() %>%
+  mutate(lab = paste0(n_censored, "/", n, " (", percentage, "%)"),
+         Timepoint_ID = paste0("D", Timepoint_ID)) 
 ```
 
 ```{r}
 adastra_dat_analysis %>%
-  group_by(Timepoint_ID) %>%
-  summarise(censored = sum(censor == "left"), .groups = "keep",
-            n = n(),
-            percentage = round(censored*100/n))
+  group_by(Timepoint_ID, ID, fluType) %>%
+  summarise(censored = any(censor == "left"), .groups = "keep") %>%
+  ungroup() %>%
+  group_by(Timepoint_ID, fluType) %>%
+  summarise(n = n(),
+            n_censored = sum(censored),
+            percentage = round(n_censored*100/n)) %>%
+  ungroup() %>%
+  mutate(lab = paste0(n_censored, "/", n, " (", percentage, "%)"),
+         Timepoint_ID = paste0("D", Timepoint_ID)) 
 ```
 
 ```{r}
@@ -120,7 +132,7 @@ G <- ggplot(dat_plot, aes(y = preds_d0, x = slope, col = fluType, shape = sympto
   ylab("Estimated admission viral densities \n(log10 genomes/mL)") +
   scale_y_continuous(breaks = seq(0,8,1)) +
   scale_color_manual(values = c("#EE4266", "#387ADF"), name = "Influenza type") +
-  scale_shape_manual(values = c(16, 17, 15), name = "Day(s) since\nsymptom onset") +
+  scale_shape_manual(values = c(16, 17, 15, 25), name = "Day(s) since\nsymptom onset") +
   #annotate('text', x = -4, y = 6, label = lab) +
   coord_flip()
 G
@@ -307,7 +319,7 @@ G_pred
 ```
 
 ```{r}
-Plot_now = F
+Plot_now = T
 
 if(Plot_now){
 plot_name <- paste0('Plots/prediction_', Type, "_", floor(Dmax), '.png')
@@ -329,7 +341,7 @@ data_Plot <- data_Plot %>%
   mutate(rediduals = log10_viral_load - preds) %>%
   ungroup()
 
-resid_plot <- ggplot(data_Plot, aes(x = as.factor(Timepoint_ID), y = rediduals)) +
+resid_plot <- ggplot(data_Plot %>% filter(censor == "none"), aes(x = as.factor(Timepoint_ID), y = rediduals)) +
   geom_jitter(width = 0.2, alpha = 0.4, size = 1.5, aes(shape = censor, fill = censor, col=censor)
               ) +
   geom_boxplot(outlier.shape = NA, fill = "white", alpha = 0.6) +
@@ -343,16 +355,16 @@ resid_plot <- ggplot(data_Plot, aes(x = as.factor(Timepoint_ID), y = rediduals))
     strip.text = element_text(face = "bold"),
     legend.position = "right"
   ) +
-  scale_shape_manual(values = c(25, 21), name = "Censor") +
-  scale_fill_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor") +
-  scale_color_manual(values = rev(c("#38419D", "#BF3131")), name = "Censor") +
+  scale_shape_manual(values = c(21), name = "Censor", guide = NULL) +
+  scale_fill_manual(values = rev(c("#38419D")), name = "Censor", guide = NULL) +
+  scale_color_manual(values = rev(c("#38419D")), name = "Censor", guide = NULL) +
   ggtitle("B) Residuals")
-
+#"#BF3131"
 resid_plot
 ```
 
 ```{r}
-Plot_now = F
+Plot_now = T
 
 if(Plot_now){
   plot_name <- paste0('Plots/residuals_', Type, "_", floor(Dmax), '.png')
@@ -423,7 +435,7 @@ ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4, common.
 ```
 
 ```{r}
-plot_now = F
+plot_now = T
 
 if(plot_now){
 for(i in 1:length(ind_plot_all)){
