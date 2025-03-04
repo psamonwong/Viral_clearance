@@ -66,7 +66,7 @@ G1 <- ggplot(res_days, aes(x = N, y = power, col = trt_effect_comp)) +
                                 ),
                      name = "") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")  +
-  ggtitle("Varied sampling schedule")
+  ggtitle("A) Varied sampling schedule")
 G1
 ###################################################################################################
 # Swabs day
@@ -108,7 +108,7 @@ G2 <- ggplot(res_swabs, aes(x = N, y = power, col = trt_effect_comp)) +
   ),
   name = "") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red") +
-  ggtitle("Varied number of swabs per day")
+  ggtitle("B) Varied number of swabs per day")
 G2
 ####################################################################
 library(ggpubr)
