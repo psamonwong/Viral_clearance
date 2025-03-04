@@ -55,7 +55,7 @@ G1 <- ggplot(res_days, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_line(linewidth = 0.5, linetype = "dashed") +
   theme_bw(base_size = 13) +
   ylab("Power") +
-  xlab("") +
+  xlab("Number of patients per arm") +
   scale_x_continuous(breaks = seq(40,240,40)) +
   scale_y_continuous(breaks = seq(0,1,0.2), limits = c(0,1)) +
   scale_color_manual(values = c("#1230AE", 
@@ -66,7 +66,8 @@ G1 <- ggplot(res_days, aes(x = N, y = power, col = trt_effect_comp)) +
                                 ),
                      name = "") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")  +
-  ggtitle("A) Varied sampling schedule")
+  ggtitle("A) Varied sampling schedule") +
+  theme(axis.title = element_text(face = "bold"))
 G1
 ###################################################################################################
 # Swabs day
@@ -97,7 +98,7 @@ G2 <- ggplot(res_swabs, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_line(linewidth = 0.5, linetype = "dashed") +
   theme_bw(base_size = 13) +
   ylab("Power") +
-  xlab("") +
+  xlab("Number of patients per arm") +
   scale_x_continuous(breaks = seq(40,240,40)) +
   scale_y_continuous(breaks = seq(0,1,0.2), limits = c(0,1)) +
   scale_color_manual(values = c("#1230AE", 
@@ -108,7 +109,8 @@ G2 <- ggplot(res_swabs, aes(x = N, y = power, col = trt_effect_comp)) +
   ),
   name = "") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red") +
-  ggtitle("B) Varied number of swabs per day")
+  ggtitle("B) Varied number of swabs per day") +
+  theme(axis.title = element_text(face = "bold"))
 G2
 ####################################################################
 library(ggpubr)
