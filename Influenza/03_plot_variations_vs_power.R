@@ -54,7 +54,7 @@ G1 <- ggplot(res_sigmasq_u2, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("B) Inter-individual variation on the slope (" * sigma[theta[2]]^2 * ")")) +
+  ggtitle(expression("B) Inter-individual variation on the slope (" * sigma[theta[2]] * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 G1
 ###################################################################################################
@@ -86,7 +86,7 @@ G2 <- ggplot(res_sigmasq_u1, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("A) Inter-individual variation on the intercept (" * sigma[theta[1]]^2 * ")")) +
+  ggtitle(expression("A) Inter-individual variation on the intercept (" * sigma[theta[1]] * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 
 G2
@@ -145,7 +145,7 @@ G3 <- ggplot(res_logvl, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("C) Observation variation (" * sigma[logvl] * ")")) +
+  ggtitle(expression("C) Observation variation (" * sigma[VL]^2 * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 G3
 ###################################################################################################

@@ -204,7 +204,7 @@ G3 <- ggplot(diff_sigma_logvl, aes(x = N, y = med, col = k_sigma_logvl)) +
              linewidth = 0.75) +
   xlab("") +
   ylab("") +
-  ggtitle(expression("A) Varied observation error (" * sigma[VL] * ")")) +
+  ggtitle(expression("A) Varied observation error (" * sigma[VL]^2 * ")")) +
   scale_color_manual(values = c("#DDA853", "#DA498D", "#69247C"), name = "") +
   theme(plot.margin = unit(c(0,0.1,0,0), 'lines'))
 
