@@ -183,6 +183,7 @@ save(model_settings,
 ```
 
 ```{r}
+i <- 1
 for(i in 1:nrow(model_settings)){
   load(paste0('Rout/model_settings_job_', i,'.RData'))
   analysis_data_stan = stan_inputs$analysis_data_stan
@@ -245,32 +246,32 @@ writeLines(sprintf('Settings:\nInput data: %s \nData update: %s \nMaximum follow
 ```
 
 ```{r}
-
-for(i in 1:length(all_mods)){
-  writeLines(sprintf('Working on the following model: %s',
-                   model_settings[i,]$mod))
-
-mod = stan_model(file = as.character(model_settings$mod[i])) # compile 
-
-out = sampling(mod, 
-               data=c(analysis_data_stan,
-                      all_priors[[model_settings$prior[i]]]),
-               iter=model_settings$Niter[i],
-               chain=model_settings$Nchain[i],
-               thin=model_settings$Nthin[i],
-               warmup=model_settings$Nwarmup[i],
-               save_warmup = T,
-               seed=i,
-               cores = 4,
-               include=T)
-
-file_name = paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
-
-print(file_name)
-
-save(out,
-     file = file_name)
-}
+# 
+# for(i in 1:length(all_mods)){
+#   writeLines(sprintf('Working on the following model: %s',
+#                    model_settings[i,]$mod))
+# 
+# mod = stan_model(file = as.character(model_settings$mod[i])) # compile 
+# 
+# out = sampling(mod, 
+#                data=c(analysis_data_stan,
+#                       all_priors[[model_settings$prior[i]]]),
+#                iter=model_settings$Niter[i],
+#                chain=model_settings$Nchain[i],
+#                thin=model_settings$Nthin[i],
+#                warmup=model_settings$Nwarmup[i],
+#                save_warmup = T,
+#                seed=i,
+#                cores = 4,
+#                include=T)
+# 
+# file_name = paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
+# 
+# print(file_name)
+# 
+# save(out,
+#      file = file_name)
+# }
 ```
 
 ```{r}
@@ -284,4 +285,41 @@ adastra_dat_analysis %>%
             q1_onset = quantile(symptomDay, 0.25),
             q3_onset = quantile(symptomDay, 0.75)) %>%
   t()
+```
+
+# Leave one out
+
+```{r}
+Type = "All"
+Dmax = 5.5
+```
+
+```{r}
+ind_exp <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                   grepl("Exponential", model_settings$mod))
+load(paste0("Rout/model_fits_job_", ind_exp, ".RData"))
+loo1 <- loo(extract_log_lik(out))
+loo1
+```
+
+```{r}
+ind_biexp <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                     grepl("Bi_exponential", model_settings$mod))
+
+load(paste0("Rout/model_fits_job_", ind_biexp, ".RData"))
+loo2 <- loo(extract_log_lik(out))
+loo2
+```
+
+```{r}
+ind_updown <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                      grepl("Up_and_down", model_settings$mod))
+
+load(paste0("Rout/model_fits_job_", ind_updown, ".RData"))
+loo3 <- loo(extract_log_lik(out))
+loo3
+```
+
+```{r}
+loo_compare(loo1, loo2, loo3)
 ```

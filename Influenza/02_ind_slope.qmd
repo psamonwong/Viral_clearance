@@ -69,6 +69,11 @@ ind <- which(model_settings$Dmax == Dmax & model_settings$Type %in% Type &
 ```
 
 ```{r}
+beta_0 <- rstan::extract(out, pars = "beta_0")[[1]]
+slope_to_hl(beta_0) %>% quantile(c(0.5, 0.25, 0.75))
+```
+
+```{r}
 model_settings <- read.csv("Outputs/model_settings.csv")
 Dmax <- c(5.5,7.5)
 Type <- c("A", "B", "All")
@@ -94,6 +99,7 @@ for(i in 1:length(ind)){
   
   sigmasq_theta1 <- NULL
   sigmasq_theta2 <- NULL
+  sigma_theta12 <- NULL
   
   for(j in 1:length(sigmasq_u1)){
       L = diag(x = unlist(thetas$sigmasq_u[j,]),nrow = 2,ncol = 2)%*%thetas$L_Omega[j,,]
@@ -101,10 +107,12 @@ for(i in 1:length(ind)){
       
       sigmasq_theta1[j] <- Epsilon[1,1]
       sigmasq_theta2[j] <- Epsilon[2,2]
+      
+      sigma_theta12[j] <- Epsilon[1,2]
   }
   
   
-  posterior_params <- cbind(sigmasq_u1, sigmasq_u2, sigma_logvl, alpha_0, beta_0, sigmasq_theta1, sigmasq_theta2)
+  posterior_params <- cbind(sigmasq_u1, sigmasq_u2, sigma_logvl, alpha_0, beta_0, sigmasq_theta1, sigmasq_theta2, sigma_theta12)
   
   summary_params <- apply(posterior_params,2, quantile, my_probs) %>% t() %>% as.data.frame()
   colnames(summary_params) <- c("P2.5", "P10", "P50", "P90", "P97.5")
@@ -122,13 +130,22 @@ summary_Params
 ```
 
 ```{r}
+# Covariance
+summary_Params[summary_Params$params == 'sigma_theta12',] %>%
+  filter(Dmax == 5.5) %>%
+  mutate(lab = paste0(round(P50,1), " [95%CrI: ", round(P2.5,1), " to ", round(P97.5,1),  "]")) %>%
+  select(Type, lab)
+```
+
+```{r}
 summary_Params$Type <- as.factor(summary_Params$Type)
 levels(summary_Params$Type) <- c("Type A", "Type B", "Both types")
 
+summary_Params <- summary_Params %>% filter(!params %in% c("sigmasq_u1", "sigmasq_u2", "sigma_theta12"))
 summary_Params$params <- as.factor(summary_Params$params)
-summary_Params <- summary_Params %>% filter(!params %in% c("sigmasq_u1", "sigmasq_u2"))
 
-summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[VL]", "sigma[theta[1]]", "sigma[theta[2]]")[as.numeric(summary_Params$params)]
+
+summary_Params$facet <- c("alpha[0]", "beta[0]", "sigma[VL]^2", "sigma[theta[1]]", "sigma[theta[2]]")[as.numeric(summary_Params$params)]
 
 summary_Params$gr <- as.factor( paste0(floor(summary_Params$Dmax), " days" ))
 
@@ -226,7 +243,7 @@ G_hl <- ggplot(summary_hl, aes(x = P50, y = ID, col = fluType)) +
   geom_vline(data = summary_hl_med_type, mapping = aes(xintercept = Q2, col=fluType),
              linewidth = 1, alpha = 0.75) +
   #geom_vline(xintercept = summary_hl_med$Q2, linewidth = 1.2, col = "gray20") +
-  annotate('text', x = 40, y = 10, label = labs, hjust = 0, size = 4) +
+  annotate('text', x = 40, y = 10, label = labs, hjust = 0, size = 3.5) +
   guides(
     color = guide_legend(
       override.aes = list(linetype = c("blank", "blank"), shape = c(16, 16))
