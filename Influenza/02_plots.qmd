@@ -445,7 +445,56 @@ for(i in 1:length(ind_plot_all)){
   dev.off()
 }  
 }
+```
 
+# Model results
 
+```{r}
+Type = "All"
+Dmax = 5.5
+```
 
+## Model 3
+
+```{r}
+ind_updown <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                      grepl("Up_and_down", model_settings$mod))
+
+load(paste0("Rout/model_fits_job_", ind_updown, ".RData"))
+```
+
+```{r}
+thetas = rstan::extract(out)
+
+tmax_pop = thetas['tmax_pop']$tmax_pop
+theta_rand_id = thetas['theta_rand_id']$theta_rand_id
+
+tmax_id <- apply(theta_rand_id[,,3], 2, function(x) x+matrix(tmax_pop, ncol = 1))
+n_tmax_before_d0 <- sum(apply(tmax_id,2,median) < 0)
+n_tmax_before_d0/ncol(theta_rand_id[,,3])
+```
+
+```{r}
+n_tmax_after_d1 <- sum(apply(tmax_id,2,median) > 1)
+n_tmax_after_d1/ncol(theta_rand_id[,,3])
+```
+
+## Model 2
+
+```{r}
+ind_biexp <- which(model_settings$Dmax == Dmax & model_settings$Type == Type &
+                     grepl("Bi_exponential", model_settings$mod))
+
+load(paste0("Rout/model_fits_job_", ind_biexp, ".RData"))
+```
+
+```{r}
+thetas = rstan::extract(out)
+
+intercept1 = thetas['intercept']$intercept[,1]
+theta_rand_id = thetas['theta_rand_id']$theta_rand_id
+
+intercept1_id <- apply(theta_rand_id[,,3], 2, function(x) x+matrix(intercept1, ncol = 1))
+n_low_intercept1 <- sum(apply(intercept1_id,2,median) < 2)
+n_low_intercept1/ncol(theta_rand_id[,,3])
 ```
