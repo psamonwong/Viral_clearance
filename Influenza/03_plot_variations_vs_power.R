@@ -186,7 +186,7 @@ G3 <- ggplot(res_logvl, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("D) Observation variation (" * sigma[VL]^2 * ")")) +
+  ggtitle(expression("D) Observation variation (" * sigma[VL] * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 G3
 ###################################################################################################
