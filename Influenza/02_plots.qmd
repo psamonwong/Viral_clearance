@@ -431,7 +431,7 @@ for(i in 1:length(IDs)){
   
 }
 
-ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 4, ncol = 4, common.legend = T, legend = "right")
+ind_plot_all <- ggarrange(plotlist =  ind_plot_list, nrow = 7, ncol = 4, common.legend = T, legend = "right")
 ```
 
 ```{r}
@@ -439,7 +439,7 @@ plot_now = T
 
 if(plot_now){
 for(i in 1:length(ind_plot_all)){
-  png(paste0("Plots/Individual_plots/Ind_plot_", i, ".png"), width = 12, height = 8, units = "in", res = 350)
+  png(paste0("Plots/Individual_plots/Ind_plot_", i, ".png"), width = 12, height = 12, units = "in", res = 350)
   print(annotate_figure( ind_plot_all[[i]], bottom = textGrob("Time since randomisation (days)", vjust = 0.5, gp = gpar(cex = 1.2, fontface="bold")),
                          left = textGrob("Viral densities (genomes/mL)", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))))
   dev.off()
