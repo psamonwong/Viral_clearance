@@ -390,6 +390,8 @@ if(Plot_now){
 
 ```
 
+# Individual plots
+
 ```{r}
 #Individual plots
 data_Plot$censor <- as.factor(data_Plot$censor)
