@@ -52,8 +52,8 @@ res_days$lab[res_days$day_plans == "0,5"] <- "First and last day \n(n=2)"
 G1 <- ggplot(res_days, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_point(size = 2, alpha = 0.8) +
   facet_wrap(.~lab) +
-  geom_line(linewidth = 0.5, linetype = "dashed") +
-  theme_bw(base_size = 13) +
+  geom_line(linewidth = 0.75, linetype = "31") +
+  theme_bw(base_size = 15) +
   ylab("Power") +
   xlab("Number of patients per arm") +
   scale_x_continuous(breaks = seq(40,240,40)) +
@@ -66,7 +66,7 @@ G1 <- ggplot(res_days, aes(x = N, y = power, col = trt_effect_comp)) +
                                 ),
                      name = "") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")  +
-  ggtitle("A) Varied sampling schedule") +
+  ggtitle("Varied sampling schedule") +
   theme(axis.title = element_text(face = "bold"))
 G1
 ###################################################################################################
@@ -95,8 +95,8 @@ res_swabs$trt_effect_comp <- factor(res_swabs$trt_effect_comp,
 G2 <- ggplot(res_swabs, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_point(size = 2, alpha = 0.8) +
   facet_wrap(.~lab) +
-  geom_line(linewidth = 0.5, linetype = "dashed") +
-  theme_bw(base_size = 13) +
+  geom_line(linewidth = 0.75, linetype = "31") +
+  theme_bw(base_size = 15) +
   ylab("Power") +
   xlab("Number of patients per arm") +
   scale_x_continuous(breaks = seq(40,240,40)) +
@@ -109,7 +109,7 @@ G2 <- ggplot(res_swabs, aes(x = N, y = power, col = trt_effect_comp)) +
   ),
   name = "") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red") +
-  ggtitle("B) Varied number of swabs per day") +
+  ggtitle("Varied number of swabs per day") +
   theme(axis.title = element_text(face = "bold"))
 G2
 ####################################################################
@@ -119,6 +119,10 @@ library(grid)
 plot_combined <- ggarrange(G1, G2, nrow = 2, align = "v",
                            common.legend = T, legend = "right")
 
+
+png("Plots/sampling.png", width = 10, height = 8, unit = "in", res = 350)
+plot_combined
+dev.off()  
 
 png("Plots/sampling_power.png", width = 10, height = 8, unit = "in", res = 350)
 plot_combined

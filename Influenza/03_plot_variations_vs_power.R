@@ -26,9 +26,9 @@ res_neg_control$trt_effect_comp <- factor(res_neg_control$trt_effect_comp,
 
 A <- ggplot(res_neg_control, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_point(size = 3.5, alpha = 0.8) +
-  geom_line(linewidth = 0.8, linetype = "dashed") +
-  theme_bw(base_size = 8) +
-  ylab("Power") +
+  geom_line(linewidth = 1, linetype = "31", alpha = 0.8) +
+  theme_bw(base_size = 18) +
+  ylab("Probability[Treatment effect > 0] > 0.975") +
   xlab("Number of patients per arm") +
   scale_x_continuous(breaks = seq(40,240,40)) +
   scale_y_continuous(breaks = seq(0,1,0.2), limits = c(0,1)) +
@@ -38,6 +38,10 @@ A <- ggplot(res_neg_control, aes(x = N, y = power, col = trt_effect_comp)) +
   ggtitle("A) Baseline clearance kinetics") +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 A
+
+png('Plots/main.png', width = 8, height = 6, units = 'in', res = 350)
+A
+dev.off()
 
 ###################################################################################################
 library(ggplot2)
@@ -86,8 +90,8 @@ res_sigmasq_u2$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_sigmasq_u2$k_si
 G1 <- ggplot(res_sigmasq_u2, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_point(size = 2, alpha = 0.8) +
   facet_wrap(.~facet) +
-  geom_line(linewidth = 0.5, linetype = "dashed") +
-  theme_bw(base_size = 10) +
+  geom_line(linewidth = 0.75, linetype = "31") +
+  theme_bw(base_size = 15) +
   ylab("") +
   xlab("") +
   scale_x_continuous(breaks = seq(40,240,40)) +
@@ -95,7 +99,7 @@ G1 <- ggplot(res_sigmasq_u2, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("C) Inter-individual variation on the slope (" * sigma[theta[2]] * ")")) +
+  ggtitle(expression("Inter-individual variation on the slope (" * sigma[theta[2]] * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 G1
 ###################################################################################################
@@ -118,8 +122,8 @@ res_sigmasq_u1$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_sigmasq_u1$k_si
 G2 <- ggplot(res_sigmasq_u1, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_point(size = 2, alpha = 0.8) +
   facet_wrap(.~facet) +
-  geom_line(linewidth = 0.5, linetype = "dashed") +
-  theme_bw(base_size = 10) +
+  geom_line(linewidth = 0.75, linetype = "31") +
+  theme_bw(base_size = 15) +
   ylab("") +
   xlab("") +
   scale_x_continuous(breaks = seq(40,240,40)) +
@@ -127,7 +131,7 @@ G2 <- ggplot(res_sigmasq_u1, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("B) Inter-individual variation on the intercept (" * sigma[theta[1]] * ")")) +
+  ggtitle(expression("Inter-individual variation on the intercept (" * sigma[theta[1]] * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 
 G2
@@ -177,8 +181,8 @@ res_logvl$facet <- c("0.5x", "1.0x", "2.0x")[as.numeric(res_logvl$k_sigma_logvl)
 G3 <- ggplot(res_logvl, aes(x = N, y = power, col = trt_effect_comp)) +
   geom_point(size = 2, alpha = 0.8) +
   facet_wrap(.~as.factor(facet)) +
-  geom_line(linewidth = 0.5, linetype = "dashed") +
-  theme_bw(base_size = 10) +
+  geom_line(linewidth = 0.75, linetype = "31") +
+  theme_bw(base_size = 15) +
   ylab("") +
   xlab("") +
   scale_x_continuous(breaks = seq(40,240,40)) +
@@ -186,7 +190,7 @@ G3 <- ggplot(res_logvl, aes(x = N, y = power, col = trt_effect_comp)) +
   scale_color_manual(values = c("#1230AE", "#6C48C5", "#C68FE6",
                                 "#D8A25E", "#A04747"),
                      name = "") +
-  ggtitle(expression("D) Observation variation (" * sigma[VL] * ")")) +
+  ggtitle(expression("Observation variation (" * sigma[VL] * ")")) +
   geom_hline(yintercept = 0.8, linetype = "dashed", col = "red")
 G3
 ###################################################################################################
@@ -197,6 +201,10 @@ combined_plot <- ggarrange(G2, G1, G3,
                            common.legend = T, ncol = 1,
                            legend = "right",
                            align = "hv")
+
+png('Plots/variations.png', width = 10, height = 10, units = 'in', res = 350)
+combined_plot
+dev.off()
 
 
 combined_plot <- annotate_figure( combined_plot, 
