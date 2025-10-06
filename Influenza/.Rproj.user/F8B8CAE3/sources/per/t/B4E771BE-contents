@@ -1,0 +1,34 @@
+listfiles <- list.files("Data_506", full.names = T)
+listfiles <- listfiles[grep(".rtf", listfiles)]
+
+library("striprtf")
+library("stringr")
+
+for(i in 1:length(listfiles)){
+  data <- read_rtf(listfiles[i])
+  year <- as.numeric(gsub(".*_(\\d{1,2})\\.rtf", "\\1", listfiles[i])) + 2500 - 543
+  
+  data <- data[!data == ""]
+  data <- data[!grepl("Reporting|Reported|Center",data)] 
+  data <- c(data[1], data[!grepl("cases", data)])
+  temp <- sapply(data, str_split, pattern = "\t")
+  names(temp) <- NULL
+  temp[[1]] <- c("", temp[[1]])
+  data_matrix <- do.call(rbind,  temp)
+  data_matrix
+  
+  data_case <- data_matrix[,c(2, grep("case", data_matrix[1,]))]
+  data_case <- as.data.frame(data_case[-1,])
+  colnames(data_case) <- c("Area", "Annual", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  data_case$year <- year
+  
+  data_death <- data_matrix[,c(2, grep("deat", data_matrix[1,]))]
+  data_death <- as.data.frame(data_death[-1,])
+  colnames(data_death) <- c("Area", "Annual", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  data_death$year <- year
+  
+  write.csv(data_case, paste0("Analysis_data/data_case_", year, ".csv"), row.names = F)
+  write.csv(data_death, paste0("Analysis_data/data_death_", year, ".csv"), row.names = F) 
+}
+
+
