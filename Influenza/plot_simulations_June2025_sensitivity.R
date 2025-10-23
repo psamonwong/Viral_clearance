@@ -186,14 +186,12 @@ sensitivity_plot <- ggplot(mapping = aes(col = trt_effect_comp)) +
   theme_bw(base_size = 15) +
   facet_wrap(.~mod, ncol = 3) +
   scale_color_manual(values = COLOR_PALETTE, name = "") +
-  geom_hline(yintercept = power_threshold, col = "red", linetype = "22", 
-             linewidth = 0.75, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0, 1), col = "grey20", linetype = "22", 
              linewidth = 0.75, alpha = 0.2) +
   xlab("Number of patients per arm") +
-  ylab("Pr[Treatment effect > 0] > 0.975") +
-  ggtitle("Sensitivity analysis for data generating processes") +
-  theme(axis.title = element_text(face = "bold"))
+  ylab("Pr[Treatment effect ≤ 0] < 0.025") +
+  ggtitle("Sensitivity analysis for data generating processes") 
 
 # Display plot
 print(sensitivity_plot)

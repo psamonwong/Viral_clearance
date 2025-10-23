@@ -118,8 +118,7 @@ plot_error_dat <- all_estimation_error %>% filter(
   k_sigmasq_u_2 %in% 1,
   k_sigmasq_u_1 %in% 1,
   N_swabs_per_day %in% 2,
-  day_plans %in% "0,1,2,3,4,5",
-  N %in% c(10,40,160,640)
+  day_plans %in% "0,1,2,3,4,5"
 ) 
 
 med_error <- plot_error_dat %>%
@@ -131,14 +130,14 @@ med_error <- plot_error_dat %>%
 
 G1 <- med_error %>%
   ggplot() +
-  scale_x_log10(breaks = c(10, 40, 160, 640)) +
+  scale_x_log10(breaks = c(10 , 20,  40,  80, 160, 320, 640)) +
   theme_bw(base_size = 15) +
   geom_hline(yintercept = 0, col = 'red',linetype = "22", linewidth = 0.7, alpha = 0.8) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
   geom_jitter(aes(x = N, y = med,  col = as.factor(trt_effect_comp)), size = 4,
-              position = position_dodge(width = 0.3), alpha = 0.85) +
+              position = position_dodge(width = 0.1), alpha = 0.85) +
   geom_errorbar(aes(x = N, ymin = low_IQR, ymax = up_IQR, col = as.factor(trt_effect_comp)),
-                width = 0, position = position_dodge(width = 0.3), alpha = 0.75, linewidth = 0.75) +
+                width = 0, position = position_dodge(width = 0.1), alpha = 0.75, linewidth = 0.75) +
   xlab("Number of patients per arm") +
   ylab("Estimation error") +
   ggtitle("A) Baseline viral kinetics") +
@@ -153,8 +152,7 @@ plot_error_dat <- all_estimation_error %>% filter(
   !k_sigmasq_u_1 %in% 1,
   k_sigmasq_u_2 %in% 1,
   N_swabs_per_day %in% 2,
-  day_plans %in% "0,1,2,3,4,5",
-  N %in% c(10, 40, 160, 640)
+  day_plans %in% "0,1,2,3,4,5"
 ) 
 
 plot_error_dat$k_sigmasq_u_1 <-  as.factor(plot_error_dat$k_sigmasq_u_1)
@@ -170,14 +168,14 @@ med_error <- plot_error_dat %>%
 
 G2<-med_error %>%
   ggplot() +
-  scale_x_log10(breaks = c(10, 40, 160, 640)) +
+  scale_x_log10(breaks = c(10 , 20,  40,  80, 160, 320, 640)) +
   theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red',linetype = "22", linewidth = 0.5, alpha = 0.8) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
   geom_jitter(aes(x = N, y = med,  col = as.factor(trt_effect_comp)), size = 1.4,
-              position = position_dodge(width = 0.3), alpha = 0.85) +
+              position = position_dodge(width = 0.15), alpha = 0.85) +
   geom_errorbar(aes(x = N, ymin = low_IQR, ymax = up_IQR, col = as.factor(trt_effect_comp)),
-                width = 0, position = position_dodge(width = 0.3), alpha = 0.75, linewidth = 0.55) +
+                width = 0, position = position_dodge(width = 0.15), alpha = 0.75, linewidth = 0.55) +
   xlab("") +
   ylab("") +
   ggtitle(expression("B) Inter-individual variation on the intercept (" * sigma[theta[1]] * ")")) +
@@ -193,8 +191,7 @@ plot_error_dat <- all_estimation_error %>% filter(
   k_sigmasq_u_1 %in% 1,
   !k_sigmasq_u_2 %in% 1,
   N_swabs_per_day %in% 2,
-  day_plans %in% "0,1,2,3,4,5",
-  N %in% c(10, 40, 160, 640)
+  day_plans %in% "0,1,2,3,4,5"
 ) 
 
 plot_error_dat$k_sigmasq_u_2 <-  as.factor(plot_error_dat$k_sigmasq_u_2)
@@ -210,14 +207,14 @@ med_error <- plot_error_dat %>%
 
 G3 <- med_error %>%
   ggplot() +
-  scale_x_log10(breaks = c(10, 40, 160, 640)) +
+  scale_x_log10(breaks = c(10 , 20,  40,  80, 160, 320, 640)) +
   theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red',linetype = "22", linewidth = 0.5, alpha = 0.8) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
   geom_jitter(aes(x = N, y = med,  col = as.factor(trt_effect_comp)), size = 1.4,
-              position = position_dodge(width = 0.3), alpha = 0.85) +
+              position = position_dodge(width = 0.15), alpha = 0.85) +
   geom_errorbar(aes(x = N, ymin = low_IQR, ymax = up_IQR, col = as.factor(trt_effect_comp)),
-                width = 0, position = position_dodge(width = 0.3), alpha = 0.75, linewidth = 0.55) +
+                width = 0, position = position_dodge(width = 0.15), alpha = 0.75, linewidth = 0.55) +
   xlab("") +
   ylab("") +
   ggtitle(expression("C) Inter-individual variation on the slope (" * sigma[theta[2]] * ")")) +
@@ -233,8 +230,7 @@ plot_error_dat <- all_estimation_error %>% filter(
   k_sigmasq_u_1 %in% 1,
   k_sigmasq_u_2 %in% 1,
   N_swabs_per_day %in% 2,
-  day_plans %in% "0,1,2,3,4,5",
-  N %in% c(10, 40, 160, 640)
+  day_plans %in% "0,1,2,3,4,5"
 ) 
 
 plot_error_dat$k_sigma_logvl <-  as.factor(plot_error_dat$k_sigma_logvl)
@@ -250,14 +246,14 @@ med_error <- plot_error_dat %>%
 
 G4 <- med_error %>%
   ggplot() +
-  scale_x_log10(breaks = c(10, 40, 160, 640)) +
+  scale_x_log10(breaks = c(10 , 20,  40,  80, 160, 320, 640)) +
   theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red',linetype = "22", linewidth = 0.5, alpha = 0.8) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
   geom_jitter(aes(x = N, y = med,  col = as.factor(trt_effect_comp)), size = 1.4,
-              position = position_dodge(width = 0.3), alpha = 0.85) +
+              position = position_dodge(width = 0.15), alpha = 0.85) +
   geom_errorbar(aes(x = N, ymin = low_IQR, ymax = up_IQR, col = as.factor(trt_effect_comp)),
-                width = 0, position = position_dodge(width = 0.3), alpha = 0.75, linewidth = 0.55) +
+                width = 0, position = position_dodge(width = 0.15), alpha = 0.75, linewidth = 0.55) +
   xlab("") +
   ylab("") +
   ggtitle(expression("D) Observation variation (" * sigma[VL] * ")")) +
@@ -274,7 +270,6 @@ plot_error_dat <- all_estimation_error %>% filter(
   k_sigmasq_u_2 %in% 1,
   N_swabs_per_day %in% 2,
   #day_plans %in% "0,1,2,3,4,5",
-  N %in% c(10, 40, 160, 640)
 ) 
 
 plot_error_dat$day_plans <-  as.factor(plot_error_dat$day_plans)
@@ -289,14 +284,14 @@ med_error <- plot_error_dat %>%
 
 G5 <- med_error %>%
   ggplot() +
-  scale_x_log10(breaks = c(10, 40, 160, 640)) +
+  scale_x_log10(breaks = c(10 , 20,  40,  80, 160, 320, 640)) +
   theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red',linetype = "22", linewidth = 0.5, alpha = 0.8) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
   geom_jitter(aes(x = N, y = med,  col = as.factor(trt_effect_comp)), size = 1.4,
-              position = position_dodge(width = 0.3), alpha = 0.85) +
+              position = position_dodge(width = 0.15), alpha = 0.85) +
   geom_errorbar(aes(x = N, ymin = low_IQR, ymax = up_IQR, col = as.factor(trt_effect_comp)),
-                width = 0, position = position_dodge(width = 0.3), alpha = 0.75, linewidth = 0.55) +
+                width = 0, position = position_dodge(width = 0.15), alpha = 0.75, linewidth = 0.55) +
   xlab("") +
   ylab("") +
   ggtitle("A) Varied sampling schedule") +
@@ -314,7 +309,6 @@ plot_error_dat <- all_estimation_error %>% filter(
   k_sigmasq_u_2 %in% 1,
   #N_swabs_per_day %in% 2,
   day_plans %in% "0,1,2,3,4,5",
-  N %in% c(10, 40, 160, 640)
 ) 
 
 plot_error_dat$N_swabs_per_day <-  as.factor(plot_error_dat$N_swabs_per_day)
@@ -329,14 +323,14 @@ med_error <- plot_error_dat %>%
 
 G6 <- med_error %>%
   ggplot() +
-  scale_x_log10(breaks = c(10, 40, 160, 640)) +
+  scale_x_log10(breaks = c(10 , 20,  40,  80, 160, 320, 640)) +
   theme_bw(base_size = 12) +
   geom_hline(yintercept = 0, col = 'red',linetype = "22", linewidth = 0.5, alpha = 0.8) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
   geom_jitter(aes(x = N, y = med,  col = as.factor(trt_effect_comp)), size = 1.4,
-              position = position_dodge(width = 0.3), alpha = 0.85) +
+              position = position_dodge(width = 0.15), alpha = 0.85) +
   geom_errorbar(aes(x = N, ymin = low_IQR, ymax = up_IQR, col = as.factor(trt_effect_comp)),
-                width = 0, position = position_dodge(width = 0.3), alpha = 0.75, linewidth = 0.55) +
+                width = 0, position = position_dodge(width = 0.15), alpha = 0.75, linewidth = 0.55) +
   xlab("") +
   ylab("") +
   ggtitle("B) Varied number of swabs per day") +

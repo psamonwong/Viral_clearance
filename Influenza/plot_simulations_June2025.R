@@ -17,7 +17,7 @@ library(grid)         # Grid graphics for annotations
 # Set quantiles used for summarizing simulation results
 QUANTILES <- c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975)
 rerun <- FALSE
-power_threshold <- 0.8
+power_threshold <- 0.9
 
 # 3. HELPER FUNCTIONS ==========================================================
 
@@ -142,10 +142,10 @@ G1 <- ggplot(mapping = aes(col = trt_effect_comp)) +
   scale_y_continuous(breaks = seq(0,1,0.2)) +
   theme_bw(base_size = 15) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")), name = "") +
-  geom_hline(yintercept = 0.8, col = "red", linetype = "22", linewidth = 0.75, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0,1), col = "grey20", linetype = "22", linewidth = 0.75, alpha = 0.2) +
   xlab("Number of patients per arm") +
-  ylab("Pr[Treatment effect > 0] > 0.975") +
+  ylab("Pr[Treatment effect ≤ 0] < 0.025") +
   ggtitle("A) Baseline viral kinetics")
 G1
 # Calculate sample sizes needed for 80% power
@@ -203,7 +203,7 @@ G2 <- ggplot(mapping = aes(col = trt_effect_comp)) +
   facet_wrap(.~k_sigmasq_u_1, nrow = 1) +
   theme_bw(base_size = 11) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
-  geom_hline(yintercept = 0.8, col = "red", linetype = "22", linewidth = 0.4, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0,1), col = "grey20", linetype = "22", linewidth = 0.4, alpha = 0.2) +
   xlab("") +
   ylab("") +
@@ -219,7 +219,7 @@ new_dat_diff <- new_dat %>%
   distinct(k_sigmasq_u_1, trt_effect_comp, .keep_all = T) %>%
   select(k_sigmasq_u_1, trt_effect_comp, N) %>%
   pivot_wider(names_from = trt_effect_comp, values_from = N) %>%
-  print()
+  print() 
 
 
 # C) SLOPE VARIATION -----------------------------------------------------------
@@ -268,7 +268,7 @@ G3 <- ggplot(mapping = aes(col = trt_effect_comp)) +
   facet_wrap(.~k_sigmasq_u_2, nrow = 1) +
   theme_bw(base_size = 11) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
-  geom_hline(yintercept = 0.8, col = "red", linetype = "22", linewidth = 0.4, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0,1), col = "grey20", linetype = "22", linewidth = 0.4, alpha = 0.2) +
   xlab("") +
   ylab("") +
@@ -332,7 +332,7 @@ G4 <- ggplot(mapping = aes(col = trt_effect_comp)) +
   facet_wrap(.~k_sigma_logvl, nrow = 1) +
   theme_bw(base_size = 11) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
-  geom_hline(yintercept = 0.8, col = "red", linetype = "22", linewidth = 0.4, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0,1), col = "grey20", linetype = "22", linewidth = 0.4, alpha = 0.2) +
   xlab("") +
   ylab("") +
@@ -393,7 +393,7 @@ G5 <- ggplot(mapping = aes(col = trt_effect_comp)) +
   facet_wrap(.~day_plans, nrow = 1) +
   theme_bw(base_size = 12) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
-  geom_hline(yintercept = 0.8, col = "red", linetype = "22", linewidth = 0.6, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0,1), col = "grey20", linetype = "22", linewidth = 0.6, alpha = 0.2) +
   xlab("") +
   ylab("") +
@@ -454,7 +454,7 @@ G6 <- ggplot(mapping = aes(col = trt_effect_comp)) +
   facet_wrap(.~N_swabs_per_day, nrow = 1) +
   theme_bw(base_size = 12) +
   scale_color_manual(values = rev(c("#1230AE", "#6C48C5", "#C68FE6","#D8A25E", "#A04747", "black")),  name = "") +
-  geom_hline(yintercept = 0.8, col = "red", linetype = "22", linewidth = 0.6, alpha = 0.8) +
+  geom_hline(yintercept = c(0.8, 0.9), col = "gray20", linetype = "22", linewidth = 0.75, alpha = 0.8) +
   geom_hline(yintercept = c(0,1), col = "grey20", linetype = "22", linewidth = 0.6, alpha = 0.2) +
   xlab("") +
   ylab("") +
@@ -486,13 +486,13 @@ combined_plot <- ggarrange(G2, G3, G4,
                            common.legend = T, ncol = 1,
                            legend = "right", align = "hv") %>%
   annotate_figure(
-    bottom = textGrob("Number of patients per arm", vjust = 0.5, gp = gpar(cex = 1.2, fontface="bold")),
-    left = textGrob("Pr[Treatment effect > 0] > 0.975", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))
+    bottom = textGrob("Number of patients per arm", vjust = 0.5, gp = gpar(cex = 1.2)),
+    left = textGrob("Pr[Treatment effect ≤ 0] < 0.025", rot = 90, gp = gpar(cex = 1.2))
   )
 
 # Combine baseline with variation plots
 combined_plot_all <- ggarrange(
-  G1 + theme(legend.position = "none", axis.title = element_text(face = "bold")), 
+  G1 + theme(legend.position = "none"), 
   combined_plot
 )
 
@@ -510,8 +510,8 @@ combined_plot2 <- ggarrange(G5, G6,
                            common.legend = T, ncol = 1,
                            legend = "right") %>%
   annotate_figure(
-    bottom = textGrob("Number of patients per arm", vjust = 0.5, gp = gpar(cex = 1.2, fontface="bold")),
-    left = textGrob("Pr[Treatment effect > 0] > 0.975", rot = 90, gp = gpar(cex = 1.2, fontface="bold"))
+    bottom = textGrob("Number of patients per arm", vjust = 0.5, gp = gpar(cex = 1.2)),
+    left = textGrob("Pr[Treatment effect ≤ 0] < 0.025", rot = 90, gp = gpar(cex = 1.2))
   )
 
 # Save sampling comparison plot
