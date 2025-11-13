@@ -57,7 +57,7 @@ load(paste0("Rout/model_fits_job_", ind, ".RData"))
 ```
 
 ```{r}
-Plot_now = T
+Plot_now = F
 
 if(Plot_now){
 plot_name <- paste0('Plots/viral_dynamics_type_', Type,'.png')
