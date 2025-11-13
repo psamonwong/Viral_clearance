@@ -228,53 +228,6 @@ writeLines(sprintf('Settings:\nInput data: %s \nData update: %s \nMaximum follow
 ```
 
 ```{r}
-
-  #analysis_data_stan$trt_mat = stan_inputs$Treatment_matrix
-  #analysis_data_stan$K_trt = ncol(analysis_data_stan$trt_mat)
-  
-  # x_intercept = stan_inputs$cov_matrices$X_int[[model_settings$cov_matrices[i]]]
-  # if(ncol(x_intercept)==0) x_intercept = array(0, dim=c(nrow(x_intercept),1))
-  # analysis_data_stan$x_intercept = x_intercept
-  # analysis_data_stan$K_cov_intercept= ncol(x_intercept)
-  
-  # x_slope = stan_inputs$cov_matrices$X_slope[[model_settings$cov_matrices[i]]]
-  # if(ncol(x_slope)==0) x_slope = array(0, dim=c(nrow(x_slope),1))
-  # analysis_data_stan$x_slope = x_slope
-  # analysis_data_stan$K_cov_slope=ncol(x_slope)
-  
-  
-```
-
-```{r}
-# 
-# for(i in 1:length(all_mods)){
-#   writeLines(sprintf('Working on the following model: %s',
-#                    model_settings[i,]$mod))
-# 
-# mod = stan_model(file = as.character(model_settings$mod[i])) # compile 
-# 
-# out = sampling(mod, 
-#                data=c(analysis_data_stan,
-#                       all_priors[[model_settings$prior[i]]]),
-#                iter=model_settings$Niter[i],
-#                chain=model_settings$Nchain[i],
-#                thin=model_settings$Nthin[i],
-#                warmup=model_settings$Nwarmup[i],
-#                save_warmup = T,
-#                seed=i,
-#                cores = 4,
-#                include=T)
-# 
-# file_name = paste0('Rout/model_fits_type_', Lab, '_', ceiling(Dmax-1),'d_job_', i,'.RData') 
-# 
-# print(file_name)
-# 
-# save(out,
-#      file = file_name)
-# }
-```
-
-```{r}
 adastra_dat_analysis %>%
   distinct(ID, .keep_all = T) %>%
   ungroup() %>%
