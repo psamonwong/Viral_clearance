@@ -9,3 +9,6 @@
 *.rds
 .Rproj.user
 /Influenza/Archive
+Influenza/Influenza.Rproj
+Influenza/.RData
+Influenza/.Rhistory
