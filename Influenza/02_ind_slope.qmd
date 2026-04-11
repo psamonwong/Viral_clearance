@@ -22,7 +22,7 @@ library(grid)
 library(webshot2)
 library(webshot)
 library(magick)
-library(GGally)
+#library(GGally)
 
 #conflicts_prefer(dplyr::filter)
 
@@ -229,7 +229,7 @@ labs <- paste(c(summary_hl_med_type$lab, summary_hl_med$lab),collapse="\n")
 ```
 
 ```{r}
-G_hl <- ggplot(summary_hl, aes(x = P50, y = ID, col = fluType)) +
+G_hl <- ggplot(summary_hl, aes(x = P50, y = ID, col = fluType, shape = fluType)) +
   geom_point(size = 2, alpha = 0.75) +
   geom_errorbar(aes(xmin = P2.5, xmax = P97.5), width = 0,
                 linewidth = 0.5, alpha = 0.75) +
@@ -239,6 +239,7 @@ G_hl <- ggplot(summary_hl, aes(x = P50, y = ID, col = fluType)) +
   ggtitle("B) Individual viral clearance half-lives") +
   geom_vline(xintercept = 0, col = "red", linetype = "dashed") +
   scale_color_manual(values = c("#EE4266", "#387ADF"), name = "Influenza type") +
+  scale_shape_manual(values = c(19, 17), name = "Influenza type") +
   theme(axis.text.y = element_blank()) +
   geom_vline(data = summary_hl_med_type, mapping = aes(xintercept = Q2, col=fluType),
              linewidth = 1, alpha = 0.75) +

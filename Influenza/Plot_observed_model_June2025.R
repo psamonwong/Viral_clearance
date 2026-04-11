@@ -108,8 +108,8 @@ G1 <- ggplot(mapping = aes(x = Timepoint_ID)) +
   theme_bw(base_size = 15) +
   coord_cartesian(ylim = c(0, 8)) +
   scale_x_continuous(breaks = seq(0, 5, by = 1)) +
-  xlab("Viral densities (log10 genomes/mL)") +
-  ylab("Time since randomisation (days)") +
+  ylab("Viral densities (log10 genomes/mL)") +
+  xlab("Time since randomisation (days)") +
   ggtitle("A) Predicted clearance kinetics") +
   theme(axis.title = element_text(face = 'bold')) +
   facet_grid(.~mod) +
